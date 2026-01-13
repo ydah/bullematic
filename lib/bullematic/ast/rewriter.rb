@@ -28,6 +28,25 @@ module Bullematic
       # @rbs associations: Array[Symbol]
       # @rbs return: void
       def add_includes(query_location, associations)
+        existing_call = find_includes_call(query_location.node)
+        if existing_call
+          existing = extract_associations_from_call(existing_call)
+          return if associations.all? { |assoc| existing.include?(assoc) }
+
+          merged = (existing + associations).uniq
+          args_location = existing_call.arguments&.location
+          return unless args_location
+
+          @modifications << Modification.new(
+            type: :replace,
+            offset: args_location.start_offset,
+            byte_length: args_location.end_offset - args_location.start_offset,
+            new_text: format_associations(merged),
+            associations: associations
+          )
+          return
+        end
+
         return if already_has_includes?(query_location, associations)
 
         strategy = Bullematic.configuration&.fix_strategy || :includes
@@ -118,6 +137,18 @@ module Bullematic
         end
 
         includes
+      end
+
+      # @rbs node: untyped
+      # @rbs return: Prism::CallNode?
+      def find_includes_call(node)
+        current = node
+        while current.is_a?(Prism::CallNode)
+          return current if %i[includes preload eager_load].include?(current.name)
+
+          current = current.receiver
+        end
+        nil
       end
 
       # @rbs call_node: untyped

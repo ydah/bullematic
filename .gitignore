@@ -3,9 +3,16 @@
 /_yardoc/
 /coverage/
 /doc/
+/gemfiles/*.gemfile.lock
+/log/bullet.log
 /pkg/
 /spec/reports/
+/spec/internal/log/
+/spec/examples.txt
 /tmp/
+/test/dummy/db/*.sqlite3
+/test/dummy/log/
+/test/dummy/tmp/
 .rspec_status
 /.gem_rbs_collection/
 /.DS_Store

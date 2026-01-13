@@ -94,6 +94,20 @@ module Bullematic
 
         return queries.first unless queries.empty?
 
+        method_name = detection.method_name
+        if method_name.nil? && detection.line_number
+          method_name = finder.find_method_name_at_line(detection.line_number)
+        end
+        if method_name&.include?(" in ")
+          method_name = method_name.split(" in ").last
+        end
+        method_name = method_name&.sub(/\Ablock /, "")
+        method_queries = finder.find_model_queries_in_method(detection.model_class_name, method_name)
+        return method_queries.first if method_queries.size == 1
+
+        fallback_queries = finder.find_model_queries(detection.model_class_name)
+        return fallback_queries.first if fallback_queries.size == 1
+
         return nil unless detection.line_number
 
         finder.find_query_at_line(detection.line_number)

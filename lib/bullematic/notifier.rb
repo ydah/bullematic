@@ -15,10 +15,19 @@ module Bullematic
       def process_notifications
         return unless defined?(Bullet) && Bullet.notification?
 
-        notifications = Bullet.send(:notification_collector)&.collection || {}
+        notifications = Bullet.send(:notification_collector)&.collection
 
-        notifications.each_value do |notification_set|
-          notification_set.each do |notification|
+        case notifications
+        when Hash
+          notifications.each_value do |notification_set|
+            notification_set.each do |notification|
+              next unless notification.is_a?(Bullet::Notification::NPlusOneQuery)
+
+              process_n_plus_one(notification)
+            end
+          end
+        when Enumerable
+          notifications.each do |notification|
             next unless notification.is_a?(Bullet::Notification::NPlusOneQuery)
 
             process_n_plus_one(notification)
@@ -49,7 +58,27 @@ module Bullematic
       # @rbs notification: untyped
       # @rbs return: Array[String]
       def extract_call_stack(notification)
-        notification.instance_variable_get(:@callers) || caller
+        callers = notification.instance_variable_get(:@callers)
+        return callers if callers && !callers.empty?
+
+        config = Bullematic.configuration
+        return caller unless config
+
+        call_stacks = Bullet::Detector::Association.send(:call_stacks) if defined?(Bullet::Detector::Association)
+        stacks =
+          if call_stacks&.respond_to?(:registry)
+            call_stacks.registry.values
+          else
+            []
+          end
+
+        matching = stacks.find do |stack|
+          Array(stack).any? do |frame|
+            config.target_paths.any? { |path| frame.is_a?(String) && frame.include?(path) }
+          end
+        end
+
+        matching || caller
       end
     end
 
