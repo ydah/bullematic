@@ -1,0 +1,91 @@
+# Generated from lib/bullematic/ast/finder.rb with RBS::Inline
+
+module Bullematic
+  module AST
+    class Finder
+      QUERY_METHODS: Array[Symbol]
+
+      type query_location = { node: untyped, location: untyped, receiver: untyped, method_name: Symbol }
+
+      class QueryLocation < Struct[untyped]
+        attr_accessor node(): untyped
+
+        attr_accessor location(): untyped
+
+        attr_accessor receiver(): untyped
+
+        attr_accessor method_name(): untyped
+
+        def self.new: (?node: untyped, ?location: untyped, ?receiver: untyped, ?method_name: untyped) -> instance
+                    | ({ ?node: untyped, ?location: untyped, ?receiver: untyped, ?method_name: untyped }) -> instance
+      end
+
+      @parse_result: untyped
+
+      # @rbs!
+      #   attr_reader parse_result: untyped
+      attr_reader parse_result: untyped
+
+      # @rbs parse_result: untyped
+      # @rbs return: void
+      def initialize: (untyped parse_result) -> void
+
+      # @rbs model_class_name: String
+      # @rbs line_number: Integer?
+      # @rbs return: Array[QueryLocation]
+      def find_model_queries: (String model_class_name, ?line_number: Integer?) -> Array[QueryLocation]
+
+      # @rbs line_number: Integer
+      # @rbs return: QueryLocation?
+      def find_query_at_line: (Integer line_number) -> QueryLocation?
+
+      private
+
+      # @rbs node: untyped
+      # @rbs queries: Array[QueryLocation]
+      # @rbs model_class_name: String
+      # @rbs target_line: Integer?
+      # @rbs skip_nodes: Set[Integer]
+      # @rbs return: void
+      def visit_node: (untyped node, Array[QueryLocation] queries, String model_class_name, Integer? target_line, ?Set[Integer] skip_nodes) -> void
+
+      # @rbs node: untyped
+      # @rbs skip_nodes: Set[Integer]
+      # @rbs return: void
+      def mark_descendant_calls: (untyped node, Set[Integer] skip_nodes) -> void
+
+      # @rbs node: untyped
+      # @rbs queries: Array[QueryLocation]
+      # @rbs target_line: Integer?
+      # @rbs return: void
+      def visit_all_queries: (untyped node, Array[QueryLocation] queries, Integer? target_line) -> void
+
+      # @rbs node: untyped
+      # @rbs queries: Array[QueryLocation]
+      # @rbs model_class_name: String
+      # @rbs target_line: Integer?
+      # @rbs return: void
+      def check_call_node: (untyped node, Array[QueryLocation] queries, String model_class_name, Integer? target_line) -> void
+
+      # @rbs node: untyped
+      # @rbs queries: Array[QueryLocation]
+      # @rbs model_class_name: String
+      # @rbs target_line: Integer?
+      # @rbs return: bool
+      def check_assignment_node: (untyped node, Array[QueryLocation] queries, String model_class_name, Integer? target_line) -> bool
+
+      # @rbs node: untyped
+      # @rbs return: untyped
+      def find_root_receiver: (untyped node) -> untyped
+
+      # @rbs node: untyped
+      # @rbs model_class_name: String
+      # @rbs return: bool
+      def model_constant?: (untyped node, String model_class_name) -> bool
+
+      # @rbs method_name: Symbol
+      # @rbs return: bool
+      def query_method?: (Symbol method_name) -> bool
+    end
+  end
+end

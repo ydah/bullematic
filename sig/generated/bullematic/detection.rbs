@@ -1,0 +1,117 @@
+# Generated from lib/bullematic/detection.rb with RBS::Inline
+
+module Bullematic
+  class Detection
+    @type: Symbol
+
+    @base_class: untyped
+
+    @associations: Array[Symbol]
+
+    @call_stack: Array[String]
+
+    @source_file: String?
+
+    @line_number: Integer?
+
+    @method_name: String?
+
+    # @rbs!
+    #   attr_reader type: Symbol
+    #   attr_reader base_class: untyped
+    #   attr_reader associations: Array[Symbol]
+    #   attr_reader call_stack: Array[String]
+    #   attr_reader source_file: String?
+    #   attr_reader line_number: Integer?
+    #   attr_reader method_name: String?
+    attr_reader type: untyped
+
+    # @rbs!
+    #   attr_reader type: Symbol
+    #   attr_reader base_class: untyped
+    #   attr_reader associations: Array[Symbol]
+    #   attr_reader call_stack: Array[String]
+    #   attr_reader source_file: String?
+    #   attr_reader line_number: Integer?
+    #   attr_reader method_name: String?
+    attr_reader base_class: untyped
+
+    # @rbs!
+    #   attr_reader type: Symbol
+    #   attr_reader base_class: untyped
+    #   attr_reader associations: Array[Symbol]
+    #   attr_reader call_stack: Array[String]
+    #   attr_reader source_file: String?
+    #   attr_reader line_number: Integer?
+    #   attr_reader method_name: String?
+    attr_reader associations: untyped
+
+    # @rbs!
+    #   attr_reader type: Symbol
+    #   attr_reader base_class: untyped
+    #   attr_reader associations: Array[Symbol]
+    #   attr_reader call_stack: Array[String]
+    #   attr_reader source_file: String?
+    #   attr_reader line_number: Integer?
+    #   attr_reader method_name: String?
+    attr_reader call_stack: untyped
+
+    # @rbs!
+    #   attr_reader type: Symbol
+    #   attr_reader base_class: untyped
+    #   attr_reader associations: Array[Symbol]
+    #   attr_reader call_stack: Array[String]
+    #   attr_reader source_file: String?
+    #   attr_reader line_number: Integer?
+    #   attr_reader method_name: String?
+    attr_reader source_file: untyped
+
+    # @rbs!
+    #   attr_reader type: Symbol
+    #   attr_reader base_class: untyped
+    #   attr_reader associations: Array[Symbol]
+    #   attr_reader call_stack: Array[String]
+    #   attr_reader source_file: String?
+    #   attr_reader line_number: Integer?
+    #   attr_reader method_name: String?
+    attr_reader line_number: untyped
+
+    # @rbs!
+    #   attr_reader type: Symbol
+    #   attr_reader base_class: untyped
+    #   attr_reader associations: Array[Symbol]
+    #   attr_reader call_stack: Array[String]
+    #   attr_reader source_file: String?
+    #   attr_reader line_number: Integer?
+    #   attr_reader method_name: String?
+    attr_reader method_name: untyped
+
+    # @rbs type: Symbol
+    # @rbs base_class: untyped
+    # @rbs associations: untyped
+    # @rbs call_stack: Array[String]
+    # @rbs return: void
+    def initialize: (type: Symbol, base_class: untyped, associations: untyped, call_stack: Array[String]) -> void
+
+    # : () -> String
+    def model_class_name: () -> String
+
+    # : () -> bool
+    def fixable?: () -> bool
+
+    private
+
+    # @rbs assocs: untyped
+    # @rbs return: Array[Symbol]
+    def normalize_associations: (untyped assocs) -> Array[Symbol]
+
+    # : () -> void
+    def parse_source_location: () -> void
+
+    # : () -> bool
+    def target_path?: () -> bool
+
+    # : () -> bool
+    def skip_path?: () -> bool
+  end
+end

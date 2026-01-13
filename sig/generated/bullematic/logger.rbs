@@ -1,0 +1,61 @@
+# Generated from lib/bullematic/logger.rb with RBS::Inline
+
+module Bullematic
+  class BullematicLogger
+    @logger: Logger
+
+    @stats: Hash[Symbol, Integer]
+
+    # @rbs!
+    #   attr_reader stats: Hash[Symbol, Integer]
+    attr_reader stats: untyped
+
+    # @rbs logger: Logger?
+    # @rbs return: void
+    def initialize: (?Logger? logger) -> void
+
+    # @rbs message: String
+    # @rbs return: void
+    def info: (String message) -> void
+
+    # @rbs message: String
+    # @rbs return: void
+    def warn: (String message) -> void
+
+    # @rbs message: String
+    # @rbs return: void
+    def error: (String message) -> void
+
+    # @rbs message: String
+    # @rbs return: void
+    def debug: (String message) -> void
+
+    # @rbs filepath: String
+    # @rbs detection: Detection
+    # @rbs return: void
+    def log_fix: (String filepath, Detection detection) -> void
+
+    # @rbs filepath: String
+    # @rbs detection: Detection
+    # @rbs reason: String
+    # @rbs return: void
+    def log_skip: (String filepath, Detection detection, String reason) -> void
+
+    # @rbs filepath: String
+    # @rbs err: Exception
+    # @rbs return: void
+    def log_error: (String filepath, Exception err) -> void
+
+    # @rbs filepath: String
+    # @rbs original: String
+    # @rbs modified: String
+    # @rbs return: void
+    def log_dry_run: (String filepath, String original, String modified) -> void
+
+    # : () -> void
+    def log_summary: () -> void
+
+    # : () -> void
+    def reset_stats: () -> void
+  end
+end

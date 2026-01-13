@@ -5,8 +5,22 @@ require "rspec/core/rake_task"
 
 RSpec::Core::RakeTask.new(:spec)
 
-require "rubocop/rake_task"
+desc "Generate RBS files from inline annotations"
+task :rbs_inline do
+  sh "bundle exec rbs-inline --output sig lib"
+end
 
-RuboCop::RakeTask.new
+desc "Run Steep type check"
+task :steep do
+  sh "bundle exec steep check"
+end
 
-task default: %i[spec rubocop]
+desc "Install RBS collection"
+task :rbs_collection_install do
+  sh "bundle exec rbs collection install"
+end
+
+desc "Run all type checks (generate RBS and run Steep)"
+task typecheck: %i[rbs_inline steep]
+
+task default: %i[spec]

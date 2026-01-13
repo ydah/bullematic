@@ -1,0 +1,135 @@
+# Generated from lib/bullematic/configuration.rb with RBS::Inline
+
+module Bullematic
+  class Configuration
+    # @rbs skip: to avoid empty array warning
+    DEFAULTS: untyped
+
+    @enabled: bool
+
+    @auto_fix: bool
+
+    @target_paths: Array[String]
+
+    @skip_paths: Array[String]
+
+    @dry_run: bool
+
+    @backup: bool
+
+    @fix_strategy: Symbol
+
+    @debug: bool
+
+    @logger: Logger?
+
+    # @rbs!
+    #   attr_accessor enabled: bool
+    #   attr_accessor auto_fix: bool
+    #   attr_accessor target_paths: Array[String]
+    #   attr_accessor skip_paths: Array[String]
+    #   attr_accessor dry_run: bool
+    #   attr_accessor backup: bool
+    #   attr_accessor fix_strategy: Symbol
+    #   attr_accessor debug: bool
+    #   attr_writer logger: Logger?
+    attr_accessor enabled: untyped
+
+    # @rbs!
+    #   attr_accessor enabled: bool
+    #   attr_accessor auto_fix: bool
+    #   attr_accessor target_paths: Array[String]
+    #   attr_accessor skip_paths: Array[String]
+    #   attr_accessor dry_run: bool
+    #   attr_accessor backup: bool
+    #   attr_accessor fix_strategy: Symbol
+    #   attr_accessor debug: bool
+    #   attr_writer logger: Logger?
+    attr_accessor auto_fix: untyped
+
+    # @rbs!
+    #   attr_accessor enabled: bool
+    #   attr_accessor auto_fix: bool
+    #   attr_accessor target_paths: Array[String]
+    #   attr_accessor skip_paths: Array[String]
+    #   attr_accessor dry_run: bool
+    #   attr_accessor backup: bool
+    #   attr_accessor fix_strategy: Symbol
+    #   attr_accessor debug: bool
+    #   attr_writer logger: Logger?
+    attr_accessor target_paths: untyped
+
+    # @rbs!
+    #   attr_accessor enabled: bool
+    #   attr_accessor auto_fix: bool
+    #   attr_accessor target_paths: Array[String]
+    #   attr_accessor skip_paths: Array[String]
+    #   attr_accessor dry_run: bool
+    #   attr_accessor backup: bool
+    #   attr_accessor fix_strategy: Symbol
+    #   attr_accessor debug: bool
+    #   attr_writer logger: Logger?
+    attr_accessor skip_paths: untyped
+
+    # @rbs!
+    #   attr_accessor enabled: bool
+    #   attr_accessor auto_fix: bool
+    #   attr_accessor target_paths: Array[String]
+    #   attr_accessor skip_paths: Array[String]
+    #   attr_accessor dry_run: bool
+    #   attr_accessor backup: bool
+    #   attr_accessor fix_strategy: Symbol
+    #   attr_accessor debug: bool
+    #   attr_writer logger: Logger?
+    attr_accessor dry_run: untyped
+
+    # @rbs!
+    #   attr_accessor enabled: bool
+    #   attr_accessor auto_fix: bool
+    #   attr_accessor target_paths: Array[String]
+    #   attr_accessor skip_paths: Array[String]
+    #   attr_accessor dry_run: bool
+    #   attr_accessor backup: bool
+    #   attr_accessor fix_strategy: Symbol
+    #   attr_accessor debug: bool
+    #   attr_writer logger: Logger?
+    attr_accessor backup: untyped
+
+    # @rbs!
+    #   attr_accessor enabled: bool
+    #   attr_accessor auto_fix: bool
+    #   attr_accessor target_paths: Array[String]
+    #   attr_accessor skip_paths: Array[String]
+    #   attr_accessor dry_run: bool
+    #   attr_accessor backup: bool
+    #   attr_accessor fix_strategy: Symbol
+    #   attr_accessor debug: bool
+    #   attr_writer logger: Logger?
+    attr_accessor fix_strategy: untyped
+
+    # @rbs!
+    #   attr_accessor enabled: bool
+    #   attr_accessor auto_fix: bool
+    #   attr_accessor target_paths: Array[String]
+    #   attr_accessor skip_paths: Array[String]
+    #   attr_accessor dry_run: bool
+    #   attr_accessor backup: bool
+    #   attr_accessor fix_strategy: Symbol
+    #   attr_accessor debug: bool
+    #   attr_writer logger: Logger?
+    attr_accessor debug: untyped
+
+    attr_writer logger: untyped
+
+    # : () -> void
+    def initialize: () -> void
+
+    # : () -> Logger
+    def logger: () -> Logger
+
+    private
+
+    # : () -> Logger
+    def default_logger: () -> Logger
+  end
+end

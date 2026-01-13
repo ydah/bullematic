@@ -1,0 +1,77 @@
+# Generated from lib/bullematic/ast/rewriter.rb with RBS::Inline
+
+module Bullematic
+  module AST
+    class Rewriter
+      type modification = { type: Symbol, offset: Integer, byte_length: Integer, new_text: String, associations: Array[Symbol] }
+
+      class Modification < Struct[untyped]
+        attr_accessor type(): untyped
+
+        attr_accessor offset(): untyped
+
+        attr_accessor byte_length(): untyped
+
+        attr_accessor new_text(): untyped
+
+        attr_accessor associations(): untyped
+
+        def self.new: (?type: untyped, ?offset: untyped, ?byte_length: untyped, ?new_text: untyped, ?associations: untyped) -> instance
+                    | ({ ?type: untyped, ?offset: untyped, ?byte_length: untyped, ?new_text: untyped, ?associations: untyped }) -> instance
+      end
+
+      @source: String
+
+      @modifications: Array[Modification]
+
+      # @rbs!
+      #   attr_reader source: String
+      #   attr_reader modifications: Array[Modification]
+      attr_reader source: untyped
+
+      # @rbs!
+      #   attr_reader source: String
+      #   attr_reader modifications: Array[Modification]
+      attr_reader modifications: untyped
+
+      # @rbs source: String
+      # @rbs return: void
+      def initialize: (String source) -> void
+
+      # @rbs query_location: Finder::QueryLocation
+      # @rbs associations: Array[Symbol]
+      # @rbs return: void
+      def add_includes: (Finder::QueryLocation query_location, Array[Symbol] associations) -> void
+
+      # : () -> String
+      def rewrite: () -> String
+
+      private
+
+      # @rbs query_location: Finder::QueryLocation
+      # @rbs return: Integer
+      def find_insert_point: (Finder::QueryLocation query_location) -> Integer
+
+      # @rbs node: untyped
+      # @rbs return: Integer
+      def find_chain_insert_point: (untyped node) -> Integer
+
+      # @rbs query_location: Finder::QueryLocation
+      # @rbs associations: Array[Symbol]
+      # @rbs return: bool
+      def already_has_includes?: (Finder::QueryLocation query_location, Array[Symbol] associations) -> bool
+
+      # @rbs node: untyped
+      # @rbs return: Array[Symbol]
+      def find_existing_includes: (untyped node) -> Array[Symbol]
+
+      # @rbs call_node: untyped
+      # @rbs return: Array[Symbol]
+      def extract_associations_from_call: (untyped call_node) -> Array[Symbol]
+
+      # @rbs associations: Array[Symbol]
+      # @rbs return: String
+      def format_associations: (Array[Symbol] associations) -> String
+    end
+  end
+end

@@ -1,0 +1,33 @@
+# Generated from lib/bullematic/fixer.rb with RBS::Inline
+
+module Bullematic
+  class Fixer
+    # : () -> Array[Detection]
+    def self.detection_queue: () -> Array[Detection]
+
+    # @rbs detection: Detection
+    # @rbs return: void
+    def self.queue: (Detection detection) -> void
+
+    # : () -> void
+    def self.clear: () -> void
+
+    # : () -> void
+    def self.apply_fixes: () -> void
+
+    # @rbs filepath: String
+    # @rbs detections: Array[Detection]
+    # @rbs logger: BullematicLogger
+    # @rbs return: void
+    private def self.process_file: (String filepath, Array[Detection] detections, BullematicLogger logger) -> void
+
+    # @rbs finder: AST::Finder
+    # @rbs detection: Detection
+    # @rbs return: AST::Finder::QueryLocation?
+    private def self.find_query_location: (AST::Finder finder, Detection detection) -> AST::Finder::QueryLocation?
+
+    # @rbs filepath: String
+    # @rbs return: void
+    private def self.backup_file: (String filepath) -> void
+  end
+end

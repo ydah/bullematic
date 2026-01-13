@@ -1,0 +1,30 @@
+# Generated from lib/bullematic/notifier.rb with RBS::Inline
+
+module Bullematic
+  class Notifier
+    # : () -> void
+    def self.setup: () -> void
+
+    # : () -> void
+    def self.process_notifications: () -> void
+
+    # : () -> void
+    private def self.setup_notification_hook: () -> void
+
+    # @rbs notification: untyped
+    # @rbs return: void
+    private def self.process_n_plus_one: (untyped notification) -> void
+
+    # @rbs notification: untyped
+    # @rbs return: Array[String]
+    private def self.extract_call_stack: (untyped notification) -> Array[String]
+
+    module NotificationHook
+      # @rbs base_class: untyped
+      # @rbs associations: untyped
+      # @rbs path: untyped
+      # @rbs return: void
+      def initialize: (untyped base_class, untyped associations, ?untyped path) -> void
+    end
+  end
+end

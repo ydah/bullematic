@@ -1,0 +1,27 @@
+# Generated from lib/bullematic.rb with RBS::Inline
+
+module Bullematic
+  class Error < StandardError
+  end
+
+  class ParseError < Error
+  end
+
+  class FixError < Error
+  end
+
+  def self.configuration: () -> Configuration?
+  def self.configuration=: (Configuration?) -> Configuration?
+
+  # : () { (Configuration) -> void } -> void
+  def self.configure: () { (Configuration) -> void } -> void
+
+  # : () -> void
+  def self.setup_bullet_hook: () -> void
+
+  # : () -> bool
+  def self.enabled?: () -> bool
+
+  # : () -> void
+  def self.reset!: () -> void
+end

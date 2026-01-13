@@ -1,0 +1,39 @@
+# Generated from lib/bullematic/ast/parser.rb with RBS::Inline
+
+module Bullematic
+  module AST
+    class Parser
+      @source_code: String
+
+      @filepath: String?
+
+      # : () -> Hash[String, untyped]
+      def self.cache: () -> Hash[String, untyped]
+
+      # : () -> void
+      def self.clear_cache: () -> void
+
+      # @rbs filepath: String
+      # @rbs return: untyped
+      def self.parse_file: (String filepath) -> untyped
+
+      # @rbs!
+      #   attr_reader source_code: String
+      #   attr_reader filepath: String?
+      attr_reader source_code: untyped
+
+      # @rbs!
+      #   attr_reader source_code: String
+      #   attr_reader filepath: String?
+      attr_reader filepath: untyped
+
+      # @rbs source_code: String
+      # @rbs filepath: String?
+      # @rbs return: void
+      def initialize: (String source_code, ?filepath: String?) -> void
+
+      # : () -> untyped
+      def parse: () -> untyped
+    end
+  end
+end

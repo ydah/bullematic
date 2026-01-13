@@ -1,0 +1,20 @@
+# Generated from lib/bullematic/integrations/rails.rb with RBS::Inline
+
+module Bullematic
+  module Integrations
+    class Railtie < ::Rails::Railtie
+    end
+  end
+
+  class Middleware
+    @app: untyped
+
+    # @rbs app: untyped
+    # @rbs return: void
+    def initialize: (untyped app) -> void
+
+    # @rbs env: Hash[String, untyped]
+    # @rbs return: untyped
+    def call: (Hash[String, untyped] env) -> untyped
+  end
+end

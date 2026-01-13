@@ -1,0 +1,18 @@
+# Generated from lib/bullematic/integrations/minitest.rb with RBS::Inline
+
+module Bullematic
+  module Integrations
+    module Minitest
+      # : () -> void
+      def self.setup: () -> void
+
+      module TestHelper
+        # : () -> void
+        def setup: () -> void
+
+        # : () -> void
+        def teardown: () -> void
+      end
+    end
+  end
+end

@@ -1,5 +1,6 @@
+# rbs_inline: enabled
 # frozen_string_literal: true
 
 module Bullematic
-  VERSION = "0.1.0"
+  VERSION = "0.1.0" #: String
 end

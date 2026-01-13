@@ -1,0 +1,87 @@
+class Logger
+  def initialize: (untyped) -> void
+  def info: (String) -> void
+  def warn: (String) -> void
+  def error: (String) -> void
+  def debug: (String) -> void
+end
+
+module RSpec
+  def self.configure: () { (untyped) -> void } -> void
+end
+
+module Minitest
+  def self.after_run: () { () -> void } -> void
+end
+
+module Rails
+  class Railtie
+    def self.initializer: (String, ?untyped) { (untyped) -> void } -> void
+  end
+
+  class Engine < Railtie
+  end
+
+  module Application
+  end
+
+  def self.env: () -> ActiveSupport::StringInquirer
+  def self.root: () -> Pathname
+
+  class Configuration
+  end
+end
+
+module ActiveSupport
+  class StringInquirer < String
+    def development?: () -> bool
+    def test?: () -> bool
+    def production?: () -> bool
+  end
+end
+
+module Bullet
+  def self.enable?: () -> bool
+  def self.start_request: () -> void
+  def self.end_request: () -> void
+  def self.notification?: () -> bool
+
+  module Notification
+    class NPlusOneQuery
+      attr_reader base_class: untyped
+      attr_reader associations: untyped
+
+      def initialize: (untyped, untyped, ?untyped?) -> void
+    end
+  end
+end
+
+class Prism::CallNode
+  def receiver: () -> untyped
+  def name: () -> Symbol
+  def arguments: () -> untyped
+  def location: () -> untyped
+end
+
+class Prism::ConstantReadNode
+  def name: () -> Symbol
+  def location: () -> untyped
+end
+
+class Prism::InstanceVariableWriteNode
+  def value: () -> untyped
+  def location: () -> untyped
+end
+
+class Prism::SymbolNode
+  def value: () -> String
+end
+
+class Prism::ArrayNode
+  def elements: () -> Array[untyped]
+end
+
+module Prism
+  def self.parse: (String, ?filepath: String?) -> untyped
+  def self.parse_file: (String) -> untyped
+end

@@ -1,0 +1,5 @@
+# Generated from lib/bullematic/version.rb with RBS::Inline
+
+module Bullematic
+  VERSION: String
+end

@@ -1,0 +1,10 @@
+# Generated from lib/bullematic/integrations/rspec.rb with RBS::Inline
+
+module Bullematic
+  module Integrations
+    module RSpec
+      # : () -> void
+      def self.setup: () -> void
+    end
+  end
+end
