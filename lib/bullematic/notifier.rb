@@ -21,16 +21,20 @@ module Bullematic
         when Hash
           notifications.each_value do |notification_set|
             notification_set.each do |notification|
-              next unless notification.is_a?(Bullet::Notification::NPlusOneQuery)
-
-              process_n_plus_one(notification)
+              if notification.is_a?(Bullet::Notification::NPlusOneQuery)
+                process_n_plus_one(notification)
+              elsif notification.is_a?(Bullet::Notification::UnusedEagerLoading)
+                process_unused_eager_loading(notification)
+              end
             end
           end
         when Enumerable
           notifications.each do |notification|
-            next unless notification.is_a?(Bullet::Notification::NPlusOneQuery)
-
-            process_n_plus_one(notification)
+            if notification.is_a?(Bullet::Notification::NPlusOneQuery)
+              process_n_plus_one(notification)
+            elsif notification.is_a?(Bullet::Notification::UnusedEagerLoading)
+              process_unused_eager_loading(notification)
+            end
           end
         end
       end
@@ -53,6 +57,24 @@ module Bullematic
         )
 
         Fixer.queue(detection) if detection.fixable?
+      end
+
+      # @rbs notification: untyped
+      # @rbs return: void
+      def process_unused_eager_loading(notification)
+        # UnusedEagerLoadingは「使われていないアソシエーション」の警告
+        # これをログに記録して、後で分析できるようにする
+        config = Bullematic.configuration
+        return unless config
+
+        if config.logger && config.debug
+          config.logger.debug "[Bullematic] UnusedEagerLoading detected:"
+          config.logger.debug "  Base class: #{notification.base_class}"
+          config.logger.debug "  Unused associations: #{notification.associations.inspect}"
+        end
+
+        # 将来的に、不要なincludesを削除する機能を追加する可能性がある
+        # 現時点では、情報を記録するのみ
       end
 
       # @rbs notification: untyped

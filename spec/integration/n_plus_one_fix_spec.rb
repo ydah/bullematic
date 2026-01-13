@@ -3,6 +3,8 @@
 require "spec_helper"
 require "fileutils"
 require "tmpdir"
+require "logger"
+require "stringio"
 
 RSpec.describe "N+1 Auto Fix Integration", type: :integration do
   include FileHelpers
@@ -166,6 +168,82 @@ RSpec.describe "N+1 Auto Fix Integration", type: :integration do
 
       expect { Bullematic::Fixer.apply_fixes }.not_to raise_error
       expect(File.read(test_file)).to eq(original_content)
+    end
+  end
+
+  describe "UnusedEagerLoading handling" do
+    let(:source_file) { File.join(fixture_dir, "unused_eager_loading.rb") }
+    let(:test_file) { File.join(temp_dir, "posts_controller.rb") }
+    let(:log_output) { StringIO.new }
+    let(:logger) { Logger.new(log_output) }
+
+    before do
+      FileUtils.cp(source_file, test_file)
+
+      Bullematic.configure do |config|
+        config.enabled = true
+        config.auto_fix = true
+        config.target_paths = [temp_dir]
+        config.debug = true
+        config.logger = logger
+      end
+    end
+
+    it "processes UnusedEagerLoading notifications and logs them" do
+      user = create(:user)
+      posts = create_list(:post, 2, user: user)
+      posts.each do |post|
+        create_list(:comment, 3, post: post, user: user)
+      end
+
+      original_content = File.read(test_file)
+
+      Bullet.end_request if Bullet.start?
+      Bullet.start_request
+
+      Object.send(:remove_const, :PostsController) if defined?(PostsController)
+      load test_file
+      PostsController.new.index
+
+      expect(Bullet.notification?).to be true
+      expect { Bullematic::Notifier.process_notifications }.not_to raise_error
+
+      log_content = log_output.string
+      expect(log_content).to include("UnusedEagerLoading detected")
+      expect(log_content).to include("Base class: Post")
+      expect(log_content).to include("Unused associations:")
+      expect(log_content).to include(":comments")
+
+      expect(File.read(test_file)).to eq(original_content)
+    end
+
+    it "handles both N+1 and UnusedEagerLoading notifications" do
+      mixed_source = File.join(fixture_dir, "existing_includes.rb")
+      FileUtils.cp(mixed_source, test_file)
+
+      user = create(:user)
+      posts = create_list(:post, 2, user: user)
+      posts.each do |post|
+        create_list(:comment, 3, post: post, user: user)
+      end
+
+      Bullet.end_request if Bullet.start?
+      Bullet.start_request
+
+      Object.send(:remove_const, :PostsController) if defined?(PostsController)
+      load test_file
+      PostsController.new.index
+
+      expect(Bullet.notification?).to be true
+      expect { Bullematic::Notifier.process_notifications }.not_to raise_error
+
+      log_content = log_output.string
+      expect(log_content).to include("UnusedEagerLoading detected")
+      expect(log_content).to include("Base class: Post")
+
+      Bullematic::Fixer.apply_fixes
+      fixed_content = File.read(test_file)
+      expect(fixed_content).to include("includes(:user, :comments)")
     end
   end
 end
