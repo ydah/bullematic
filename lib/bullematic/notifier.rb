@@ -15,15 +15,30 @@ module Bullematic
       def process_notifications
         return unless defined?(Bullet) && Bullet.notification?
 
+        config = Bullematic.configuration
+        if config&.logger && config.debug
+          config.logger.debug "[Bullematic] Processing notifications..."
+        end
+
         notifications = Bullet.send(:notification_collector)&.collection
+
+        if config&.logger && config.debug
+          config.logger.debug "[Bullematic] Notifications collection type: #{notifications.class}"
+          config.logger.debug "[Bullematic] Notifications count: #{notifications.respond_to?(:size) ? notifications.size : 'unknown'}"
+        end
+
+        n_plus_one_count = 0
+        unused_eager_loading_count = 0
 
         case notifications
         when Hash
           notifications.each_value do |notification_set|
             notification_set.each do |notification|
               if notification.is_a?(Bullet::Notification::NPlusOneQuery)
+                n_plus_one_count += 1
                 process_n_plus_one(notification)
               elsif notification.is_a?(Bullet::Notification::UnusedEagerLoading)
+                unused_eager_loading_count += 1
                 process_unused_eager_loading(notification)
               end
             end
@@ -31,11 +46,19 @@ module Bullematic
         when Enumerable
           notifications.each do |notification|
             if notification.is_a?(Bullet::Notification::NPlusOneQuery)
+              n_plus_one_count += 1
               process_n_plus_one(notification)
             elsif notification.is_a?(Bullet::Notification::UnusedEagerLoading)
+              unused_eager_loading_count += 1
               process_unused_eager_loading(notification)
             end
           end
+        end
+
+        if config&.logger && config.debug
+          config.logger.debug "[Bullematic] Processed #{n_plus_one_count} N+1 notifications"
+          config.logger.debug "[Bullematic] Processed #{unused_eager_loading_count} UnusedEagerLoading notifications"
+          config.logger.debug "[Bullematic] Detection queue size: #{Fixer.detection_queue.size}"
         end
       end
 
