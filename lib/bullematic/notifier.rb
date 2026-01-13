@@ -56,7 +56,23 @@ module Bullematic
           call_stack: extract_call_stack(notification)
         )
 
-        Fixer.queue(detection) if detection.fixable?
+        config = Bullematic.configuration
+        if config&.logger && config.debug
+          config.logger.debug "[Bullematic] N+1 Detection created:"
+          config.logger.debug "  Base class: #{notification.base_class}"
+          config.logger.debug "  Associations: #{notification.associations.inspect}"
+          config.logger.debug "  Source file: #{detection.source_file}"
+          config.logger.debug "  Line number: #{detection.line_number}"
+          config.logger.debug "  Fixable: #{detection.fixable?}"
+          config.logger.debug "  Queue size before: #{Fixer.detection_queue.size}"
+        end
+
+        if detection.fixable?
+          Fixer.queue(detection)
+          if config&.logger && config.debug
+            config.logger.debug "  Queue size after: #{Fixer.detection_queue.size}"
+          end
+        end
       end
 
       # @rbs notification: untyped
@@ -120,7 +136,23 @@ module Bullematic
           call_stack: caller
         )
 
-        Fixer.queue(detection) if detection.fixable?
+        config = Bullematic.configuration
+        if config&.logger && config.debug
+          config.logger.debug "[Bullematic] N+1 Detection created (via hook):"
+          config.logger.debug "  Base class: #{base_class}"
+          config.logger.debug "  Associations: #{associations.inspect}"
+          config.logger.debug "  Source file: #{detection.source_file}"
+          config.logger.debug "  Line number: #{detection.line_number}"
+          config.logger.debug "  Fixable: #{detection.fixable?}"
+          config.logger.debug "  Queue size before: #{Fixer.detection_queue.size}"
+        end
+
+        if detection.fixable?
+          Fixer.queue(detection)
+          if config&.logger && config.debug
+            config.logger.debug "  Queue size after: #{Fixer.detection_queue.size}"
+          end
+        end
       end
     end
   end
