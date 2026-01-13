@@ -42,6 +42,23 @@ module Bullematic
         queries.first
       end
 
+      # @rbs line_number: Integer
+      # @rbs return: String?
+      def find_method_name_at_line(line_number)
+        find_method_for_line(parse_result.value, line_number)
+      end
+
+      # @rbs model_class_name: String
+      # @rbs method_name: String?
+      # @rbs return: Array[QueryLocation]
+      def find_model_queries_in_method(model_class_name, method_name)
+        return [] unless method_name
+
+        queries = [] #: Array[QueryLocation]
+        visit_method_node(parse_result.value, queries, model_class_name, method_name)
+        queries
+      end
+
       private
 
       # @rbs node: untyped
@@ -146,6 +163,44 @@ module Bullematic
           method_name: value.name
         )
         true
+      end
+
+      # @rbs node: untyped
+      # @rbs queries: Array[QueryLocation]
+      # @rbs model_class_name: String
+      # @rbs method_name: String
+      # @rbs return: void
+      def visit_method_node(node, queries, model_class_name, method_name)
+        return unless node.respond_to?(:child_nodes)
+
+        if node.is_a?(Prism::DefNode) && node.name.to_s == method_name
+          visit_node(node.body, queries, model_class_name, nil) if node.body
+          return
+        end
+
+        node.child_nodes.compact.each do |child|
+          visit_method_node(child, queries, model_class_name, method_name)
+        end
+      end
+
+      # @rbs node: untyped
+      # @rbs line_number: Integer
+      # @rbs return: String?
+      def find_method_for_line(node, line_number)
+        return nil unless node.respond_to?(:child_nodes)
+
+        if node.is_a?(Prism::DefNode)
+          start_line = node.location.start_line
+          end_line = node.location.end_line
+          return node.name.to_s if line_number >= start_line && line_number <= end_line
+        end
+
+        node.child_nodes.compact.each do |child|
+          found = find_method_for_line(child, line_number)
+          return found if found
+        end
+
+        nil
       end
 
       # @rbs node: untyped

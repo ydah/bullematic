@@ -33,4 +33,15 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "bullet", ">= 6.0"
   spec.add_dependency "prism", ">= 0.24.0"
+
+  spec.add_development_dependency "appraisal", "~> 2.5"
+  spec.add_development_dependency "combustion", "~> 1.4"
+  spec.add_development_dependency "database_cleaner-active_record", "~> 2.1"
+  spec.add_development_dependency "factory_bot", "~> 6.4"
+  spec.add_development_dependency "minitest", "~> 5.20"
+  spec.add_development_dependency "rails", ">= 7.0"
+  spec.add_development_dependency "rspec", "~> 3.12"
+  spec.add_development_dependency "rspec-rails", "~> 6.1"
+  spec.add_development_dependency "simplecov", "~> 0.22"
+  spec.add_development_dependency "sqlite3", ">= 1.7", "< 3.0"
 end

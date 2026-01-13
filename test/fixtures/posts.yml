@@ -1,0 +1,9 @@
+one:
+  title: First Post
+  body: Hello
+  user: one
+
+two:
+  title: Second Post
+  body: World
+  user: one

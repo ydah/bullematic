@@ -1,0 +1,9 @@
+one:
+  body: Comment one
+  post: one
+  user: one
+
+two:
+  body: Comment two
+  post: one
+  user: two
