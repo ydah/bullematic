@@ -4,6 +4,7 @@ require "test_helper"
 
 class MinitestIntegrationTest < ActionDispatch::IntegrationTest
   include Bullematic::Integrations::Minitest::TestHelper
+  fixtures :all
 
   def setup
     super
