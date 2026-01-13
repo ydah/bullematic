@@ -72,6 +72,46 @@ RSpec.describe "N+1 Auto Fix Integration", type: :integration do
       fixed_content = File.read(test_file)
       expect(fixed_content).to include(".includes(:comments)")
     end
+
+    it "logs detection queue changes when debug is enabled" do
+      log_output = StringIO.new
+      logger = Logger.new(log_output)
+
+      Bullematic.configure do |config|
+        config.enabled = true
+        config.auto_fix = true
+        config.target_paths = [temp_dir]
+        config.debug = true
+        config.logger = logger
+      end
+
+      Bullematic::Fixer.clear
+
+      user = create(:user)
+      posts = create_list(:post, 2, user: user)
+      posts.each do |post|
+        create_list(:comment, 3, post: post, user: user)
+      end
+
+      Bullet.end_request if Bullet.start?
+      Bullet.start_request
+
+      Object.send(:remove_const, :PostsController) if defined?(PostsController)
+      load test_file
+      PostsController.new.index
+
+      Bullematic::Notifier.process_notifications
+
+      log_content = log_output.string
+      expect(log_content).to include("N+1 Detection created")
+      expect(log_content).to include("Base class: Post")
+      expect(log_content).to include("Associations: [:comments]")
+      expect(log_content).to include("Fixable: true")
+      expect(log_content).to include("Queue size before: 0")
+      expect(log_content).to include("Queue size after:")
+
+      expect(Bullematic::Fixer.detection_queue.size).to be > 0
+    end
   end
 
   describe "merge into existing includes" do
