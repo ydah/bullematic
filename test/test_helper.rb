@@ -15,12 +15,21 @@ if File.exist?(schema_file)
 end
 
 class ActiveSupport::TestCase
-  self.fixture_paths = [File.expand_path("fixtures", __dir__)]
+  fixture_root = File.expand_path("fixtures", __dir__)
+  if respond_to?(:fixture_paths=)
+    self.fixture_paths = [fixture_root]
+  else
+    self.fixture_path = fixture_root
+  end
   fixtures :all
 end
 
 class ActionDispatch::IntegrationTest
   include ActiveRecord::TestFixtures
-  self.fixture_paths = ActiveSupport::TestCase.fixture_paths
+  if respond_to?(:fixture_paths=)
+    self.fixture_paths = ActiveSupport::TestCase.fixture_paths
+  else
+    self.fixture_path = ActiveSupport::TestCase.fixture_path
+  end
   fixtures :all
 end
