@@ -90,6 +90,17 @@ RSpec.describe Bullematic::CLI do
     end
   end
 
+  it "refuses to read a command through a symlink" do
+    Dir.mktmpdir do |directory|
+      evidence = File.join(directory, "evidence.jsonl")
+      target = File.join(directory, "command.json")
+      File.write(target, JSON.generate(["unexpected-command"]))
+      File.symlink(target, "#{evidence}.command.json")
+
+      expect { described_class.send(:read_command, evidence) }.to raise_error(Bullematic::Error, /symlink/)
+    end
+  end
+
   it "ignores non-N+1 warnings during verification" do
     n_plus_one = instance_double(Bullematic::Detection, type: :n_plus_one)
     unused = instance_double(Bullematic::Detection, type: :unused_eager_loading)

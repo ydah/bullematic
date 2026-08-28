@@ -155,13 +155,17 @@ module Bullematic
         path = "#{evidence_path}.command.json"
         raise Error, "symlink command files are unsupported" if File.symlink?(path)
 
-        File.binwrite(path, JSON.generate(command))
+        File.open(path, File::WRONLY | File::CREAT | File::TRUNC, 0o600) do |file|
+          file.chmod(0o600)
+          file.write(JSON.generate(command))
+        end
       end
 
       # @rbs evidence_path: String
       # @rbs return: Array[String]
       def read_command(evidence_path)
         path = "#{evidence_path}.command.json"
+        raise Error, "symlink command files are unsupported" if File.symlink?(path)
         return [] unless File.file?(path)
 
         value = JSON.parse(File.binread(path))

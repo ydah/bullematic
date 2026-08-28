@@ -71,6 +71,17 @@ RSpec.describe Bullematic::EvidenceStore do
     end
   end
 
+  it "refuses to read a symlink evidence file" do
+    Dir.mktmpdir do |directory|
+      target = File.join(directory, "target.jsonl")
+      evidence = File.join(directory, "evidence.jsonl")
+      File.write(target, "")
+      File.symlink(target, evidence)
+
+      expect { described_class.read(evidence) }.to raise_error(Bullematic::Error, /symlink/)
+    end
+  end
+
   it "keeps complete JSON lines from parallel worker processes" do
     Dir.mktmpdir do |directory|
       source = File.join(directory, "posts.rb")

@@ -43,6 +43,7 @@ module Bullematic
       # @rbs filepath: String
       # @rbs return: Array[Detection]
       def read(filepath = path)
+        reject_symlink!(filepath)
         return [] unless File.file?(filepath)
 
         detections = File.foreach(filepath).filter_map do |line|
