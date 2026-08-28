@@ -122,8 +122,8 @@ jobs:
           ruby-version: '3.1'
           bundler-cache: true
 
-      - name: Run AST and integration tests with minimum Prism
-        run: bundle exec rspec spec/bullematic/ast spec/integration/n_plus_one_fix_spec.rb
+      - name: Run full suite with minimum Prism
+        run: bundle exec rake
 
   windows:
     runs-on: windows-latest
