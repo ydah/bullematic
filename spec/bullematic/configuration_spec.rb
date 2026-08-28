@@ -8,8 +8,8 @@ RSpec.describe Bullematic::Configuration do
       expect(config.enabled).to be true
     end
 
-    it "has auto_fix set to true" do
-      expect(config.auto_fix).to be true
+    it "has auto_fix set to false" do
+      expect(config.auto_fix).to be false
     end
 
     it "has default target_paths" do
@@ -20,12 +20,12 @@ RSpec.describe Bullematic::Configuration do
       expect(config.skip_paths).to eq([])
     end
 
-    it "has dry_run set to false" do
-      expect(config.dry_run).to be false
+    it "has dry_run set to true" do
+      expect(config.dry_run).to be true
     end
 
-    it "has backup set to false" do
-      expect(config.backup).to be false
+    it "has backup set to true" do
+      expect(config.backup).to be true
     end
 
     it "has fix_strategy set to :includes" do

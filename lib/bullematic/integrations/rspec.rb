@@ -18,10 +18,10 @@ module Bullematic
               end
             end
 
-            config.after(:each) do
+            config.after(:each) do |example|
               if Bullematic.enabled? && defined?(Bullet) && Bullet.enable?
                 begin
-                  Bullematic::Notifier.process_notifications if Bullet.notification?
+                  Bullematic::Notifier.process_notifications(context_id: example.id) if Bullet.notification?
                 ensure
                   Bullet.end_request
                 end

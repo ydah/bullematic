@@ -81,6 +81,7 @@ RSpec.describe "N+1 Auto Fix Integration", type: :integration do
         config.enabled = true
         config.auto_fix = true
         config.target_paths = [temp_dir]
+        config.dry_run = false
         config.debug = true
         config.logger = logger
       end
@@ -125,6 +126,7 @@ RSpec.describe "N+1 Auto Fix Integration", type: :integration do
         config.enabled = true
         config.auto_fix = true
         config.target_paths = [temp_dir]
+        config.dry_run = false
       end
     end
 
@@ -161,6 +163,7 @@ RSpec.describe "N+1 Auto Fix Integration", type: :integration do
         config.enabled = true
         config.auto_fix = true
         config.target_paths = [temp_dir]
+        config.dry_run = false
       end
     end
 
@@ -185,7 +188,8 @@ RSpec.describe "N+1 Auto Fix Integration", type: :integration do
       Bullematic::Fixer.apply_fixes
 
       fixed_content = File.read(test_file)
-      expect(fixed_content).to match(/includes.*comments.*likes/m)
+      expected = File.read(File.join(fixture_dir, "..", "expected", "nested_associations_fixed.rb"))
+      expect(fixed_content).to eq(expected)
     end
   end
 
@@ -226,6 +230,7 @@ RSpec.describe "N+1 Auto Fix Integration", type: :integration do
         config.target_paths = [temp_dir]
         config.debug = true
         config.logger = logger
+        config.dry_run = false
       end
     end
 

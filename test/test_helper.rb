@@ -11,8 +11,10 @@ require "bullematic/integrations/minitest"
 schema_file = File.expand_path("dummy/db/schema.rb", __dir__)
 if File.exist?(schema_file)
   ActiveRecord::Schema.verbose = false
-  load schema_file
+  ActiveRecord::Base.connection.disable_referential_integrity { load schema_file }
 end
+
+Bullematic::Integrations::Minitest.setup
 
 class ActiveSupport::TestCase
   fixture_root = File.expand_path("fixtures", __dir__)

@@ -33,8 +33,14 @@ module Bullematic
 
         existing_call = find_includes_call(query_location.node)
         if existing_call
+          if associations.any?(Hash)
+            existing_source = existing_call.arguments&.location&.slice
+            return :already_present if existing_source&.include?(format_associations(associations))
+          end
+
           existing = extract_associations_from_call(existing_call)
-          return :already_present if associations.all? { |assoc| existing.include?(assoc) }
+          requested = associations.reject { |association| association.is_a?(Hash) }
+          return :already_present if requested.size == associations.size && requested.all? { |assoc| existing.include?(assoc) }
         end
 
         return :already_present if already_has_includes?(query_location, associations)
@@ -111,6 +117,8 @@ module Bullematic
       # @rbs associations: Array[Symbol]
       # @rbs return: bool
       def already_has_includes?(query_location, associations)
+        return false if associations.any?(Hash)
+
         existing = find_existing_includes(query_location.node)
         return false if existing.empty?
 
@@ -177,7 +185,23 @@ module Bullematic
       # @rbs associations: Array[Symbol]
       # @rbs return: String
       def format_associations(associations)
-        associations.map(&:inspect).join(", ")
+        associations.map { |association| format_association(association) }.join(", ")
+      end
+
+      # @rbs association: untyped
+      # @rbs return: String
+      def format_association(association)
+        case association
+        when Hash
+          association.map do |key, value|
+            key_source = key.to_s.match?(/\A[a-z_]\w*\z/) ? "#{key}:" : "#{key.inspect} =>"
+            "#{key_source} #{format_association(value)}"
+          end.join(", ")
+        when Array
+          "[#{association.map { |nested| format_association(nested) }.join(', ')}]"
+        else
+          association.inspect
+        end
       end
 
       #: () -> void

@@ -31,7 +31,7 @@ module Bullematic
       @app.call(env)
     ensure
       if Bullematic.enabled? && defined?(Bullet) && Bullet.notification?
-        Bullematic::Notifier.process_notifications
+        Bullematic::Notifier.process_notifications(context_id: env.object_id)
       end
     end
   end

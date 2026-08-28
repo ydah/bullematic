@@ -9,9 +9,12 @@ module Bullematic
         return unless defined?(Bullet)
       end
 
-      #: () -> void
-      def process_notifications
+      # @rbs context_id: untyped
+      # @rbs return: void
+      def process_notifications(context_id: nil)
         return unless defined?(Bullet) && Bullet.notification?
+
+        context_id ||= Object.new.object_id
 
         config = Bullematic.configuration
         if config&.logger && config.debug
@@ -34,7 +37,7 @@ module Bullematic
             notification_set.each do |notification|
               if notification.is_a?(Bullet::Notification::NPlusOneQuery)
                 n_plus_one_count += 1
-                process_n_plus_one(notification)
+                process_n_plus_one(notification, context_id)
               elsif notification.is_a?(Bullet::Notification::UnusedEagerLoading)
                 unused_eager_loading_count += 1
                 process_unused_eager_loading(notification)
@@ -45,7 +48,7 @@ module Bullematic
           notifications.each do |notification|
             if notification.is_a?(Bullet::Notification::NPlusOneQuery)
               n_plus_one_count += 1
-              process_n_plus_one(notification)
+              process_n_plus_one(notification, context_id)
             elsif notification.is_a?(Bullet::Notification::UnusedEagerLoading)
               unused_eager_loading_count += 1
               process_unused_eager_loading(notification)
@@ -64,13 +67,15 @@ module Bullematic
 
       #: () -> void
       # @rbs notification: untyped
+      # @rbs context_id: Integer
       # @rbs return: void
-      def process_n_plus_one(notification)
+      def process_n_plus_one(notification, context_id)
         detection = Detection.new(
           type: :n_plus_one,
           base_class: notification.base_class,
           associations: notification.associations,
-          call_stack: extract_call_stack(notification)
+          call_stack: extract_call_stack(notification),
+          context_id: context_id
         )
 
         config = Bullematic.configuration

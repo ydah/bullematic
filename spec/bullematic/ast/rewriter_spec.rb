@@ -77,6 +77,15 @@ RSpec.describe Bullematic::AST::Rewriter do
 
       expect(rewriter.rewrite).to eq('Post.includes(:"odd-name").all')
     end
+
+    it "emits nested association trees" do
+      source = "Post.all"
+      rewriter = described_class.new(source)
+
+      rewriter.add_includes(find_query(source, "Post"), [{ comments: :likes }])
+
+      expect(rewriter.rewrite).to eq("Post.includes(comments: :likes).all")
+    end
   end
 
   describe "#rewrite" do

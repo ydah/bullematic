@@ -98,6 +98,19 @@ RSpec.describe Bullematic::Detection do
       end
     end
 
+    context "when a path only shares the target prefix" do
+      it "returns false" do
+        detection = described_class.new(
+          type: :n_plus_one,
+          base_class: "Post",
+          associations: [:comments],
+          call_stack: ["app/controllers_backup/posts_controller.rb:15:in `index'"]
+        )
+
+        expect(detection.fixable?).to be false
+      end
+    end
+
     context "when associations are empty" do
       it "returns false" do
         detection = described_class.new(

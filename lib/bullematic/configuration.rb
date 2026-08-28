@@ -10,11 +10,11 @@ module Bullematic
     # @rbs skip: to avoid empty array warning
     DEFAULTS = { #: Hash[Symbol, untyped]
       enabled: true,
-      auto_fix: true,
+      auto_fix: false,
       target_paths: %w[app/controllers app/models app/services],
       skip_paths: [],
-      dry_run: false,
-      backup: false,
+      dry_run: true,
+      backup: true,
       fix_strategy: :includes,
       logger: nil,
       debug: false

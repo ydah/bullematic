@@ -29,7 +29,7 @@ module Bullematic
           begin
             if Bullematic.enabled? && defined?(Bullet) && Bullet.enable?
               begin
-                Bullematic::Notifier.process_notifications if Bullet.notification?
+                Bullematic::Notifier.process_notifications(context_id: name) if Bullet.notification?
               ensure
                 Bullet.end_request
               end

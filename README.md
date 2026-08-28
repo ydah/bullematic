@@ -110,11 +110,11 @@ Bullematic auto-loads via Railtie in development and test environments when the 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `enabled` | Boolean | `true` | Enable or disable Bullematic |
-| `auto_fix` | Boolean | `true` | Automatically apply fixes |
+| `auto_fix` | Boolean | `false` | Automatically apply fixes |
 | `target_paths` | Array | `['app/controllers', 'app/models', 'app/services']` | Paths to consider for fixes |
 | `skip_paths` | Array | `[]` | Paths to skip |
-| `dry_run` | Boolean | `false` | Preview changes without applying |
-| `backup` | Boolean | `false` | Create `.bullematic.bak` backup files |
+| `dry_run` | Boolean | `true` | Preview changes without applying |
+| `backup` | Boolean | `true` | Create `.bullematic.bak` backup files |
 | `fix_strategy` | Symbol | `:includes` | Strategy: `:includes`, `:preload`, or `:eager_load` |
 | `logger` | Logger | Auto-configured | Custom logger instance |
 | `debug` | Boolean | `false` | Enable debug mode (raises errors) |

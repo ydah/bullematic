@@ -84,15 +84,9 @@ module Bullematic
         rewriter = AST::Rewriter.new(original_source)
         changed = [] #: Array[Detection]
 
-        detections.each do |detection|
-          location = find_query_location(finder, detection)
-
-          if location.nil?
-            logger.log_skip(filepath, detection, "could not locate query")
-            next
-          end
-
-          result = rewriter.add_includes(location, detection.associations)
+        build_requests(finder, detections, logger, filepath).each do |request|
+          detection = request[:detection]
+          result = rewriter.add_includes(request[:location], request[:associations])
           if result == :changed
             changed << detection
           else
@@ -108,6 +102,7 @@ module Bullematic
 
         if Bullematic.configuration&.dry_run
           logger.log_dry_run(filepath, original_source, new_source)
+          changed.each { |detection| logger.log_plan(filepath, detection) }
         else
           atomic_write(filepath, new_source, expected_digest)
           changed.each { |detection| logger.log_fix(filepath, detection) }
@@ -143,6 +138,99 @@ module Bullematic
         nil
       end
 
+      # @rbs finder: AST::Finder
+      # @rbs detections: Array[Detection]
+      # @rbs logger: BullematicLogger
+      # @rbs filepath: String
+      # @rbs return: Array[Hash[Symbol, untyped]]
+      def build_requests(finder, detections, logger, filepath)
+        requests = [] #: Array[Hash[Symbol, untyped]]
+        unresolved = [] #: Array[Detection]
+
+        detections.each do |detection|
+          location = find_query_location(finder, detection)
+          if location
+            requests << { detection: detection, location: location, associations: detection.associations }
+          else
+            unresolved << detection
+          end
+        end
+
+        consumed = [] #: Array[Detection]
+        requests.each do |request|
+          request[:associations] = association_tree(request[:detection], unresolved, consumed, [])
+        end
+        (unresolved - consumed).each { |detection| logger.log_skip(filepath, detection, "could not locate query") }
+        requests
+      end
+
+      # @rbs detection: Detection
+      # @rbs candidates: Array[Detection]
+      # @rbs consumed: Array[Detection]
+      # @rbs seen: Array[String]
+      # @rbs return: Array[untyped]
+      def association_tree(detection, candidates, consumed, seen)
+        return detection.associations if seen.include?(detection.model_class_name)
+
+        detection.associations.map do |association|
+          child = nested_detection(detection, association, candidates - consumed)
+          next association unless child
+
+          consumed << child
+          nested = association_tree(child, candidates, consumed, seen + [detection.model_class_name])
+          { association => nested.one? ? nested.first : nested }
+        end
+      end
+
+      # @rbs parent: Detection
+      # @rbs association: Symbol
+      # @rbs candidates: Array[Detection]
+      # @rbs return: Detection?
+      def nested_detection(parent, association, candidates)
+        return nil unless parent.context_id
+
+        model = constantize_model(parent.model_class_name)
+        return nil unless model&.respond_to?(:reflect_on_association)
+
+        reflection = model.reflect_on_association(association)
+        return nil unless reflection && !reflection.polymorphic?
+
+        matches = candidates.select do |candidate|
+          candidate.context_id == parent.context_id &&
+            same_execution_location?(parent, candidate) &&
+            candidate.model_class_name == reflection.klass.name
+        end
+        matches.one? ? matches.first : nil
+      rescue NameError
+        nil
+      end
+
+      # @rbs detection: Detection
+      # @rbs return: String?
+      def normalized_method(detection)
+        detection.method_name&.split(" in ")&.last&.sub(/\Ablock /, "")
+      end
+
+      # @rbs left: Detection
+      # @rbs right: Detection
+      # @rbs return: bool
+      def same_execution_location?(left, right)
+        left_method = normalized_method(left)
+        right_method = normalized_method(right)
+        return left_method == right_method if left_method && right_method
+
+        left.line_number == right.line_number
+      end
+
+      # @rbs name: String
+      # @rbs return: untyped
+      def constantize_model(name)
+        normalized = name.delete_prefix("::")
+        return nil unless normalized.match?(/\A[A-Z]\w*(?:::[A-Z]\w*)*\z/)
+
+        normalized.split("::").reduce(Object) { |scope, constant| scope.const_get(constant, false) }
+      end
+
       # @rbs filepath: String
       # @rbs source: String
       # @rbs expected_digest: String
@@ -169,7 +257,7 @@ module Bullematic
       # @rbs return: void
       def backup_file(filepath)
         backup_path = "#{filepath}.bullematic.bak"
-        FileUtils.cp(filepath, backup_path)
+        FileUtils.cp(filepath, backup_path) unless File.exist?(backup_path)
       end
     end
   end

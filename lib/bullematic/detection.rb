@@ -1,6 +1,8 @@
 # rbs_inline: enabled
 # frozen_string_literal: true
 
+require "pathname"
+
 module Bullematic
   class Detection
     # @rbs @type: Symbol
@@ -10,6 +12,7 @@ module Bullematic
     # @rbs @source_file: String?
     # @rbs @line_number: Integer?
     # @rbs @method_name: String?
+    # @rbs @context_id: untyped
 
     # @rbs!
     #   attr_reader type: Symbol
@@ -19,19 +22,22 @@ module Bullematic
     #   attr_reader source_file: String?
     #   attr_reader line_number: Integer?
     #   attr_reader method_name: String?
+    #   attr_reader context_id: untyped
     attr_reader :type, :base_class, :associations, :call_stack,
-                :source_file, :line_number, :method_name
+                :source_file, :line_number, :method_name, :context_id
 
     # @rbs type: Symbol
     # @rbs base_class: untyped
     # @rbs associations: untyped
     # @rbs call_stack: Array[String]
+    # @rbs context_id: untyped
     # @rbs return: void
-    def initialize(type:, base_class:, associations:, call_stack:)
+    def initialize(type:, base_class:, associations:, call_stack:, context_id: nil)
       @type = type
       @base_class = base_class
       @associations = normalize_associations(associations)
       @call_stack = call_stack
+      @context_id = context_id
       parse_source_location
     end
 
@@ -51,7 +57,7 @@ module Bullematic
 
     #: () -> Array[untyped]
     def fingerprint
-      [source_file, line_number, model_class_name, associations.sort]
+      [context_id, source_file, line_number, model_class_name, associations.sort]
     end
 
     private
@@ -81,7 +87,7 @@ module Bullematic
         line = match[2].to_i
         method = match[3]
 
-        next unless filepath && target_paths.any? { |path| filepath.include?(path) }
+        next unless filepath && path_in?(filepath, target_paths)
 
         @source_file = filepath
         @line_number = line
@@ -97,9 +103,7 @@ module Bullematic
       config = Bullematic.configuration
       return false unless config
 
-      config.target_paths.any? do |path|
-        source_file&.include?(path)
-      end
+      path_in?(source_file, config.target_paths)
     end
 
     #: () -> bool
@@ -109,9 +113,36 @@ module Bullematic
       config = Bullematic.configuration
       return false unless config
 
-      config.skip_paths.any? do |path|
-        source_file&.include?(path)
+      path_in?(source_file, config.skip_paths)
+    end
+
+    # @rbs filepath: String
+    # @rbs paths: Array[String]
+    # @rbs return: bool
+    def path_in?(filepath, paths)
+      source = expand_path(filepath)
+
+      paths.any? do |path|
+        next false unless path.is_a?(String) && !path.empty?
+
+        target = expand_path(path)
+        source == target || source.to_s.start_with?("#{target}#{File::SEPARATOR}")
       end
+    end
+
+    # @rbs path: String
+    # @rbs return: Pathname
+    def expand_path(path)
+      pathname = Pathname.new(path)
+      expanded = if pathname.absolute?
+                   pathname.expand_path
+                 else
+                   root = defined?(Rails) && Rails.respond_to?(:root) && Rails.root ? Rails.root : Dir.pwd
+                   Pathname.new(root).join(pathname).expand_path
+                 end
+      expanded.exist? ? expanded.realpath : expanded
+    rescue Errno::ENOENT, Errno::EACCES
+      expanded
     end
   end
 end

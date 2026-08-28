@@ -14,7 +14,7 @@ module Bullematic
     # @rbs return: void
     def initialize(logger = nil)
       @logger = logger || Bullematic.configuration&.logger || ::Logger.new($stdout)
-      @stats = { fixed: 0, skipped: 0, errors: 0 }
+      @stats = { fixed: 0, planned: 0, skipped: 0, errors: 0 }
     end
 
     # @rbs message: String
@@ -51,6 +51,14 @@ module Bullematic
       info("Fixed N+1 query in #{filepath}:#{detection.line_number}")
       info("  Model: #{detection.model_class_name}")
       info("  Association: #{detection.associations.inspect}")
+    end
+
+    # @rbs filepath: String
+    # @rbs detection: Detection
+    # @rbs return: void
+    def log_plan(filepath, detection)
+      @stats[:planned] += 1
+      info("Planned N+1 fix in #{filepath}:#{detection.line_number}")
     end
 
     # @rbs filepath: String
@@ -92,12 +100,13 @@ module Bullematic
 
     #: () -> void
     def log_summary
-      info("Summary: #{@stats[:fixed]} fixed, #{@stats[:skipped]} skipped, #{@stats[:errors]} errors")
+      info("Summary: #{@stats[:fixed]} fixed, #{@stats[:planned]} planned, " \
+           "#{@stats[:skipped]} skipped, #{@stats[:errors]} errors")
     end
 
     #: () -> void
     def reset_stats
-      @stats = { fixed: 0, skipped: 0, errors: 0 }
+      @stats = { fixed: 0, planned: 0, skipped: 0, errors: 0 }
     end
   end
 end
