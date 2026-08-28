@@ -42,6 +42,12 @@ module Bullematic
       # @rbs return: Array[QueryLocation]
       def find_model_queries_for_variables_at_line: (String model_class_name, Integer line_number) -> Array[QueryLocation]
 
+      # @rbs parent_association: Symbol
+      # @rbs child_associations: Array[Symbol]
+      # @rbs line_number: Integer?
+      # @rbs return: bool
+      def nested_association?: (Symbol parent_association, Array[Symbol] child_associations, Integer? line_number) -> bool
+
       private
 
       # @rbs node: untyped
@@ -94,6 +100,30 @@ module Bullematic
       # @rbs method_name: Symbol
       # @rbs return: bool
       def query_method?: (Symbol method_name) -> bool
+
+      # @rbs node: untyped
+      # @rbs parent_association: Symbol
+      # @rbs child_associations: Array[Symbol]
+      # @rbs line_number: Integer
+      # @rbs return: bool
+      def nested_association_in_node?: (untyped node, Symbol parent_association, Array[Symbol] child_associations, Integer line_number) -> bool
+
+      # @rbs node: untyped
+      # @rbs method_name: Symbol
+      # @rbs names: Array[Symbol]
+      # @rbs line_number: Integer
+      # @rbs return: bool
+      def call_on_variable_at_line?: (untyped node, Symbol method_name, Array[Symbol] names, Integer line_number) -> bool
+
+      # @rbs node: untyped
+      # @rbs method_name: Symbol
+      # @rbs return: bool
+      def receiver_calls?: (untyped node, Symbol method_name) -> bool
+
+      # @rbs node: untyped
+      # @rbs names: Array[Symbol]
+      # @rbs return: bool
+      def variable_written?: (untyped node, Array[Symbol] names) -> bool
     end
   end
 end

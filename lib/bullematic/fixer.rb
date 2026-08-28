@@ -84,6 +84,13 @@ module Bullematic
       # @rbs logger: BullematicLogger
       # @rbs return: void
       def process_file(filepath, detections, logger)
+        detections = detections.reject do |detection|
+          unsafe = !detection.fixable?
+          logger.log_skip(filepath, detection, "outside configured fix scope") if unsafe
+          unsafe
+        end
+        return if detections.empty?
+
         unless File.exist?(filepath)
           detections.each { |detection| logger.log_skip(filepath, detection, "source file not found") }
           return
@@ -179,7 +186,7 @@ module Bullematic
 
         consumed = [] #: Array[Detection]
         requests.each do |request|
-          request[:associations] = association_tree(request[:detection], unresolved, consumed, [])
+          request[:associations] = association_tree(request[:detection], unresolved, consumed, [], finder)
         end
         (unresolved - consumed).each { |detection| logger.log_skip(filepath, detection, "could not locate query") }
         requests
@@ -203,16 +210,17 @@ module Bullematic
       # @rbs candidates: Array[Detection]
       # @rbs consumed: Array[Detection]
       # @rbs seen: Array[String]
+      # @rbs finder: AST::Finder
       # @rbs return: Array[untyped]
-      def association_tree(detection, candidates, consumed, seen)
+      def association_tree(detection, candidates, consumed, seen, finder)
         return detection.associations if seen.include?(detection.model_class_name)
 
         detection.associations.map do |association|
-          child = nested_detection(detection, association, candidates - consumed)
+          child = nested_detection(detection, association, candidates - consumed, finder)
           next association unless child
 
           consumed << child
-          nested = association_tree(child, candidates, consumed, seen + [detection.model_class_name])
+          nested = association_tree(child, candidates, consumed, seen + [detection.model_class_name], finder)
           { association => nested.one? ? nested.first : nested }
         end
       end
@@ -220,8 +228,9 @@ module Bullematic
       # @rbs parent: Detection
       # @rbs association: Symbol
       # @rbs candidates: Array[Detection]
+      # @rbs finder: AST::Finder
       # @rbs return: Detection?
-      def nested_detection(parent, association, candidates)
+      def nested_detection(parent, association, candidates, finder)
         return nil unless parent.context_id
 
         model = constantize_model(parent.model_class_name)
@@ -230,12 +239,21 @@ module Bullematic
         reflection = model.reflect_on_association(association)
         return nil unless reflection && !reflection.polymorphic?
 
+        child_class_name = reflection.klass.name
+        return nil unless parent.associations.one? do |parent_association|
+          candidate = model.reflect_on_association(parent_association)
+          candidate && !candidate.polymorphic? && candidate.klass.name == child_class_name
+        end
+
         matches = candidates.select do |candidate|
           candidate.context_id == parent.context_id &&
             same_execution_location?(parent, candidate) &&
-            candidate.model_class_name == reflection.klass.name
+            candidate.model_class_name == child_class_name
         end
-        matches.one? ? matches.first : nil
+        return nil unless matches.one?
+
+        child = matches.first
+        finder.nested_association?(association, child.associations, child.line_number) ? child : nil
       rescue NameError
         nil
       end

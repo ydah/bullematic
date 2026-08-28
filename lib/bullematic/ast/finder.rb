@@ -45,6 +45,16 @@ module Bullematic
         end
       end
 
+      # @rbs parent_association: Symbol
+      # @rbs child_associations: Array[Symbol]
+      # @rbs line_number: Integer?
+      # @rbs return: bool
+      def nested_association?(parent_association, child_associations, line_number)
+        return false unless line_number
+
+        nested_association_in_node?(parse_result.value, parent_association, child_associations, line_number)
+      end
+
       private
 
       # @rbs node: untyped
@@ -186,6 +196,74 @@ module Bullematic
       # @rbs return: bool
       def query_method?(method_name)
         QUERY_METHODS.include?(method_name)
+      end
+
+      # @rbs node: untyped
+      # @rbs parent_association: Symbol
+      # @rbs child_associations: Array[Symbol]
+      # @rbs line_number: Integer
+      # @rbs return: bool
+      def nested_association_in_node?(node, parent_association, child_associations, line_number)
+        return false unless node.respond_to?(:child_nodes)
+
+        if node.is_a?(Prism::CallNode) && %i[each find_each].include?(node.name) && node.block &&
+           receiver_calls?(node.receiver, parent_association)
+          parameters = node.block.parameters&.parameters&.requireds || []
+          names = parameters.map(&:name)
+          return true if !variable_written?(node.block.body, names) && child_associations.all? do |association|
+            call_on_variable_at_line?(node.block.body, association, names, line_number)
+          end
+        end
+
+        node.child_nodes.compact.any? do |child|
+          nested_association_in_node?(child, parent_association, child_associations, line_number)
+        end
+      end
+
+      # @rbs node: untyped
+      # @rbs method_name: Symbol
+      # @rbs names: Array[Symbol]
+      # @rbs line_number: Integer
+      # @rbs return: bool
+      def call_on_variable_at_line?(node, method_name, names, line_number)
+        return false unless node.respond_to?(:child_nodes)
+
+        if node.is_a?(Prism::CallNode) && node.name == method_name && node.location.start_line == line_number
+          receiver = find_root_receiver(node)
+          return true if receiver.is_a?(Prism::LocalVariableReadNode) && names.include?(receiver.name)
+        end
+
+        if node.is_a?(Prism::CallNode) && node.block
+          parameters = node.block.parameters&.parameters&.requireds || []
+          return false if parameters.any? { |parameter| parameter.respond_to?(:name) && names.include?(parameter.name) }
+        end
+
+        node.child_nodes.compact.any? do |child|
+          call_on_variable_at_line?(child, method_name, names, line_number)
+        end
+      end
+
+      # @rbs node: untyped
+      # @rbs method_name: Symbol
+      # @rbs return: bool
+      def receiver_calls?(node, method_name)
+        current = node
+        while current.is_a?(Prism::CallNode)
+          return true if current.name == method_name
+
+          current = current.receiver
+        end
+        false
+      end
+
+      # @rbs node: untyped
+      # @rbs names: Array[Symbol]
+      # @rbs return: bool
+      def variable_written?(node, names)
+        return false unless node.respond_to?(:child_nodes)
+        return true if node.is_a?(Prism::LocalVariableWriteNode) && names.include?(node.name)
+
+        node.child_nodes.compact.any? { |child| variable_written?(child, names) }
       end
     end
   end

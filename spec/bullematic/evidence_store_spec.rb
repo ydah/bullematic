@@ -44,6 +44,21 @@ RSpec.describe Bullematic::EvidenceStore do
     end
   end
 
+  it "rejects evidence without a source snapshot" do
+    Tempfile.create do |file|
+      file.write(JSON.generate(
+        type: "n_plus_one",
+        base_class: "Post",
+        associations: ["comments"],
+        call_stack: ["app/controllers/posts_controller.rb:1:in 'index'"],
+        source_digest: nil
+      ))
+      file.flush
+
+      expect { described_class.read(file.path) }.to raise_error(Bullematic::Error, /source digest/)
+    end
+  end
+
   it "refuses to truncate a symlink evidence file" do
     Dir.mktmpdir do |directory|
       target = File.join(directory, "target")

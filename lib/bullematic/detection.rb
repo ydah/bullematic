@@ -55,6 +55,8 @@ module Bullematic
       raise ArgumentError, "invalid evidence type" unless %i[n_plus_one unused_eager_loading].include?(type)
       raise ArgumentError, "invalid evidence associations" unless associations.is_a?(Array)
       raise ArgumentError, "invalid evidence call stack" unless call_stack.is_a?(Array)
+      source_digest = data["source_digest"]
+      raise ArgumentError, "invalid evidence source digest" unless source_digest.is_a?(String) && source_digest.match?(/\A[0-9a-f]{64}\z/)
 
       new(
         type: type,
@@ -62,7 +64,7 @@ module Bullematic
         associations: associations,
         call_stack: call_stack,
         context_id: data["context_id"],
-        source_digest: data["source_digest"]
+        source_digest: source_digest
       )
     end
 

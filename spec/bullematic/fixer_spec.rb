@@ -123,6 +123,33 @@ RSpec.describe Bullematic::Fixer do
         expect(File.read(filepath)).to eq(user_edit)
       end
     end
+
+    it "rechecks the configured fix scope before writing" do
+      Dir.mktmpdir do |directory|
+        filepath = File.join(directory, "posts.rb")
+        original = "Post.all\n"
+        File.write(filepath, original)
+        Bullematic.configure do |config|
+          config.target_paths = [directory]
+          config.dry_run = false
+          config.backup = false
+          config.logger = Logger.new(File::NULL)
+        end
+        detection = Bullematic::Detection.new(
+          type: :n_plus_one,
+          base_class: "Post",
+          associations: [:comments],
+          call_stack: ["#{filepath}:1:in 'PostsController#index'"]
+        )
+        Bullematic.configuration.skip_paths = [directory]
+
+        described_class.queue(detection)
+        stats = described_class.apply_fixes
+
+        expect(File.read(filepath)).to eq(original)
+        expect(stats[:skipped]).to eq(1)
+      end
+    end
   end
 
   describe "atomic writes" do
@@ -275,6 +302,61 @@ RSpec.describe Bullematic::Fixer do
       query = described_class.send(:find_query_location, finder, detection)
 
       expect(query.target_name).to eq(:@posts)
+    end
+
+    it "does not guess between associations to the same child model" do
+      reflection = instance_double(
+        ActiveRecord::Reflection::AssociationReflection,
+        polymorphic?: false,
+        klass: Comment
+      )
+      allow(Post).to receive(:reflect_on_association).and_call_original
+      allow(Post).to receive(:reflect_on_association).with(:review_comments).and_return(reflection)
+      parent = Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: %i[comments review_comments],
+        call_stack: ["app/controllers/posts_controller.rb:1:in 'index'"],
+        context_id: 1
+      )
+      child = Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Comment",
+        associations: [:likes],
+        call_stack: ["app/controllers/posts_controller.rb:1:in 'index'"],
+        context_id: 1
+      )
+      finder = Bullematic::AST::Finder.new(
+        Prism.parse("posts.each { |post| post.comments.each { |comment| comment.likes.to_a } }")
+      )
+
+      associations = described_class.send(:association_tree, parent, [child], [], [], finder)
+
+      expect(associations).to eq(%i[comments review_comments])
+    end
+
+    it "does not merge independent detections from the same line" do
+      parent = Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:comments],
+        call_stack: ["app/controllers/posts_controller.rb:1:in 'index'"],
+        context_id: 1
+      )
+      child = Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Comment",
+        associations: [:likes],
+        call_stack: ["app/controllers/posts_controller.rb:1:in 'index'"],
+        context_id: 1
+      )
+      source = "comments = Comment.all; posts.each { |post| post.comments.to_a }; " \
+               "comments.each { |comment| comment.likes.to_a }\n"
+      finder = Bullematic::AST::Finder.new(Prism.parse(source))
+
+      associations = described_class.send(:association_tree, parent, [child], [], [], finder)
+
+      expect(associations).to eq([:comments])
     end
   end
 end

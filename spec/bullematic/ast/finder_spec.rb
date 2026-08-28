@@ -114,4 +114,20 @@ RSpec.describe Bullematic::AST::Finder do
       expect(queries.map(&:target_name)).to eq([:@posts])
     end
   end
+
+  describe "#nested_association?" do
+    it "requires the child access to use the parent's block variable" do
+      nested = <<~RUBY
+        post.comments.each do |comment|
+          comment.likes.to_a
+        end
+      RUBY
+      shadowed = "post.comments.each { |comment| others.each { |comment| comment.likes.to_a } }"
+      reassigned = "post.comments.each { |comment| comment = other; comment.likes.to_a }"
+
+      expect(described_class.new(Prism.parse(nested)).nested_association?(:comments, [:likes], 2)).to be true
+      expect(described_class.new(Prism.parse(shadowed)).nested_association?(:comments, [:likes], 1)).to be false
+      expect(described_class.new(Prism.parse(reassigned)).nested_association?(:comments, [:likes], 1)).to be false
+    end
+  end
 end

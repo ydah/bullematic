@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add persistent recording and explicit `record`, `plan`, `apply`, `verify`, `fix`, and `doctor` commands.
 - Emit accurate dry-run hunks and reject evidence when its source snapshot has changed.
 - Preserve child command flags, verify only N+1 evidence, and reject read-only or symlinked write targets.
+- Reject snapshot-less or newly excluded evidence and require structural proof before merging nested associations.
 
 ## [0.1.0] - 2026-01-13
 

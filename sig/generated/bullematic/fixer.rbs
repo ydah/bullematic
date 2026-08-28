@@ -50,14 +50,16 @@ module Bullematic
     # @rbs candidates: Array[Detection]
     # @rbs consumed: Array[Detection]
     # @rbs seen: Array[String]
+    # @rbs finder: AST::Finder
     # @rbs return: Array[untyped]
-    private def self.association_tree: (Detection detection, Array[Detection] candidates, Array[Detection] consumed, Array[String] seen) -> Array[untyped]
+    private def self.association_tree: (Detection detection, Array[Detection] candidates, Array[Detection] consumed, Array[String] seen, AST::Finder finder) -> Array[untyped]
 
     # @rbs parent: Detection
     # @rbs association: Symbol
     # @rbs candidates: Array[Detection]
+    # @rbs finder: AST::Finder
     # @rbs return: Detection?
-    private def self.nested_detection: (Detection parent, Symbol association, Array[Detection] candidates) -> Detection?
+    private def self.nested_detection: (Detection parent, Symbol association, Array[Detection] candidates, AST::Finder finder) -> Detection?
 
     # @rbs detection: Detection
     # @rbs return: String?
