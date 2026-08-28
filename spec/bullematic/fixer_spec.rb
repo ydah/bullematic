@@ -72,6 +72,33 @@ RSpec.describe Bullematic::Fixer do
 
       expect(described_class.detection_queue).to be_empty
     end
+
+    it "refuses evidence captured before the source changed" do
+      Dir.mktmpdir do |directory|
+        filepath = File.join(directory, "posts.rb")
+        original = "@posts = Post.all\n@posts.each { |post| post.comments.to_a }\n"
+        File.write(filepath, original)
+        Bullematic.configure do |config|
+          config.target_paths = [directory]
+          config.dry_run = false
+          config.backup = false
+          config.logger = Logger.new(File::NULL)
+        end
+        detection = Bullematic::Detection.new(
+          type: :n_plus_one,
+          base_class: "Post",
+          associations: [:comments],
+          call_stack: ["#{filepath}:2:in 'block in PostsController#index'"]
+        )
+        user_edit = "# user edit\n#{original}"
+        File.write(filepath, user_edit)
+
+        described_class.queue(detection)
+        described_class.apply_fixes
+
+        expect(File.read(filepath)).to eq(user_edit)
+      end
+    end
   end
 
   describe "atomic writes" do

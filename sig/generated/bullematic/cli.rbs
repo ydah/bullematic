@@ -1,0 +1,53 @@
+# Generated from lib/bullematic/cli.rb with RBS::Inline
+
+module Bullematic
+  class CLI
+    # @rbs argv: Array[String]
+    # @rbs return: Integer
+    def self.run: (Array[String] argv) -> Integer
+
+    # @rbs argv: Array[String]
+    # @rbs return: Array[String]
+    private def self.command_args: (Array[String] argv) -> Array[String]
+
+    # @rbs command: Array[String]
+    # @rbs return: Integer
+    private def self.record: (Array[String] command) -> Integer
+
+    # @rbs dry_run: bool
+    # @rbs return: Integer
+    private def self.apply: (dry_run: bool) -> Integer
+
+    # @rbs argv: Array[String]
+    # @rbs return: Integer
+    private def self.fix: (Array[String] argv) -> Integer
+
+    # @rbs command: Array[String]
+    # @rbs return: Integer
+    private def self.verify: (Array[String] command) -> Integer
+
+    # : () -> Integer
+    private def self.doctor: () -> Integer
+
+    # @rbs command: Array[String]
+    # @rbs evidence_path: String
+    # @rbs return: Integer
+    private def self.run_command: (Array[String] command, String evidence_path) -> Integer
+
+    # : () -> void
+    private def self.load_application: () -> void
+
+    # @rbs dry_run: bool
+    # @rbs return: void
+    private def self.configure: (bool dry_run) -> void
+
+    # @rbs evidence_path: String
+    # @rbs command: Array[String]
+    # @rbs return: void
+    private def self.write_command: (String evidence_path, Array[String] command) -> void
+
+    # @rbs evidence_path: String
+    # @rbs return: Array[String]
+    private def self.read_command: (String evidence_path) -> Array[String]
+  end
+end

@@ -19,4 +19,14 @@ RSpec.describe Bullematic::BullematicLogger do
     expect(logger.stats).to include(fixed: 0, planned: 1)
     expect(output.string).to include("0 fixed, 1 planned")
   end
+
+  it "reports an insertion without marking shifted lines as changed" do
+    output = StringIO.new
+    logger = described_class.new(Logger.new(output))
+
+    logger.log_dry_run("posts.rb", "a\nb\n", "x\na\nb\n")
+
+    expect(output.string).to include("@@ -1,0 +1,1 @@\n+x\n")
+    expect(output.string).not_to include("-a\n")
+  end
 end

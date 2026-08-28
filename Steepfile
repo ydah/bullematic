@@ -6,6 +6,7 @@ target :lib do
   signature "sig/generated"
   signature "sig/stubs"
   library "digest"
+  library "json"
   library "tempfile"
   library "tmpdir"
 

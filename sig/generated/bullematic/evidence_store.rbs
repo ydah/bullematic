@@ -1,0 +1,28 @@
+# Generated from lib/bullematic/evidence_store.rb with RBS::Inline
+
+module Bullematic
+  class EvidenceStore
+    ENV_KEY: ::String
+
+    DEFAULT_PATH: ::String
+
+    # : () -> bool
+    def self.recording?: () -> bool
+
+    # : () -> String
+    def self.path: () -> String
+
+    # @rbs detection: Detection
+    # @rbs filepath: String
+    # @rbs return: void
+    def self.append: (Detection detection, ?String filepath) -> void
+
+    # @rbs filepath: String
+    # @rbs return: void
+    def self.clear: (?String filepath) -> void
+
+    # @rbs filepath: String
+    # @rbs return: Array[Detection]
+    def self.read: (?String filepath) -> Array[Detection]
+  end
+end

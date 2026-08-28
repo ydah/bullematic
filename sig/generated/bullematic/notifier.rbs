@@ -23,8 +23,9 @@ module Bullematic
     private def self.process_n_plus_one: (untyped notification, untyped context_id) -> void
 
     # @rbs notification: untyped
+    # @rbs context_id: untyped
     # @rbs return: void
-    private def self.process_unused_eager_loading: (untyped notification) -> void
+    private def self.process_unused_eager_loading: (untyped notification, untyped context_id) -> void
 
     # @rbs notification: untyped
     # @rbs return: Array[String]

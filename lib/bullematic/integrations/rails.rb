@@ -42,7 +42,7 @@ module Bullematic
     # @rbs env: Hash[String, untyped]
     # @rbs return: void
     def capture_notifications(env)
-      if Bullematic.enabled? && defined?(Bullet)
+      if Bullematic.enabled? && EvidenceStore.recording? && defined?(Bullet)
         Bullematic::Notifier.process_notifications(context_id: env.object_id)
       end
     end

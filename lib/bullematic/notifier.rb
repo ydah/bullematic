@@ -83,7 +83,7 @@ module Bullematic
           :n_plus_one
         elsif defined?(Bullet::Notification::UnusedEagerLoading) &&
               notification.is_a?(Bullet::Notification::UnusedEagerLoading)
-          process_unused_eager_loading(notification)
+          process_unused_eager_loading(notification, context_id)
           :unused_eager_loading
         end
       rescue StandardError => error
@@ -127,10 +127,22 @@ module Bullematic
       end
 
       # @rbs notification: untyped
+      # @rbs context_id: untyped
       # @rbs return: void
-      def process_unused_eager_loading(notification)
+      def process_unused_eager_loading(notification, context_id)
         config = Bullematic.configuration
         return unless config
+
+        if EvidenceStore.recording?
+          detection = Detection.new(
+            type: :unused_eager_loading,
+            base_class: notification.base_class,
+            associations: notification.associations,
+            call_stack: extract_call_stack(notification),
+            context_id: context_id
+          )
+          Fixer.queue(detection) if detection.fixable?
+        end
 
         if config.logger && config.debug
           config.logger.debug "[Bullematic] UnusedEagerLoading detected:"

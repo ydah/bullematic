@@ -85,17 +85,20 @@ module Bullematic
     # @rbs modified: String
     # @rbs return: void
     def log_dry_run(filepath, original, modified)
-      info("[DRY RUN] Would modify #{filepath}:")
-
       original_lines = original.lines
       modified_lines = modified.lines
-
-      modified_lines.each_with_index do |line, idx|
-        next if original_lines[idx] == line
-
-        info("  - #{original_lines[idx]&.chomp}")
-        info("  + #{line.chomp}")
-      end
+      prefix = 0
+      prefix += 1 while original_lines[prefix] == modified_lines[prefix] && prefix < original_lines.size
+      suffix = 0
+      suffix += 1 while suffix < original_lines.size - prefix && suffix < modified_lines.size - prefix &&
+                        original_lines[-suffix - 1] == modified_lines[-suffix - 1]
+      removed = original_lines.slice(prefix, original_lines.size - prefix - suffix) || []
+      added = modified_lines.slice(prefix, modified_lines.size - prefix - suffix) || []
+      diff = ["[DRY RUN] Would modify #{filepath}:\n", "--- #{filepath}\n", "+++ #{filepath}\n",
+              "@@ -#{prefix + 1},#{removed.size} +#{prefix + 1},#{added.size} @@\n"]
+      removed.each { |line| diff << "-#{line.encode('UTF-8', invalid: :replace, undef: :replace)}" }
+      added.each { |line| diff << "+#{line.encode('UTF-8', invalid: :replace, undef: :replace)}" }
+      info(diff.join)
     end
 
     #: () -> void

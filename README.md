@@ -75,6 +75,15 @@ After reviewing the planned changes, set `dry_run = false` to apply them. Ambigu
 BULLEMATIC=1 bundle exec rspec
 ```
 
+Or use the explicit record/apply workflow:
+
+```bash
+bundle exec bullematic record -- bundle exec rspec spec/requests/posts_spec.rb
+bundle exec bullematic plan
+bundle exec bullematic apply
+bundle exec bullematic verify
+```
+
 ## Integrations
 
 ### RSpec
@@ -106,7 +115,7 @@ end
 ### Rails
 
 Bullematic auto-loads via Railtie in development and test environments when the gem is loaded.
-The development middleware records detections after the response body closes; it does not rewrite source files inside a web request.
+The development middleware records detections after the response body closes when run through `bullematic record`; it never retains or rewrites detections inside a normal web request.
 
 ## Configuration
 

@@ -5,6 +5,7 @@ RSpec.describe Bullematic::Middleware do
 
   before do
     allow(Bullematic).to receive(:enabled?).and_return(true)
+    allow(Bullematic::EvidenceStore).to receive(:recording?).and_return(true)
     allow(Bullet).to receive(:notification?).and_return(true)
     allow(Bullematic::Notifier).to receive(:process_notifications)
   end
@@ -32,5 +33,14 @@ RSpec.describe Bullematic::Middleware do
     middleware = described_class.new(->(_env) { raise "boom" })
 
     expect { middleware.call(env) }.to raise_error("boom")
+  end
+
+  it "does not retain request detections without a recording sink" do
+    allow(Bullematic::EvidenceStore).to receive(:recording?).and_return(false)
+    response = described_class.new(->(_env) { [200, {}, ["ok"]] }).call(env)
+
+    response[2].close
+
+    expect(Bullematic::Notifier).not_to have_received(:process_notifications)
   end
 end

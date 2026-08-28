@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "pathname"
+require "digest"
 
 module Bullematic
   class Detection
@@ -13,6 +14,7 @@ module Bullematic
     # @rbs @line_number: Integer?
     # @rbs @method_name: String?
     # @rbs @context_id: untyped
+    # @rbs @source_digest: String?
 
     # @rbs!
     #   attr_reader type: Symbol
@@ -23,22 +25,57 @@ module Bullematic
     #   attr_reader line_number: Integer?
     #   attr_reader method_name: String?
     #   attr_reader context_id: untyped
+    #   attr_reader source_digest: String?
     attr_reader :type, :base_class, :associations, :call_stack,
-                :source_file, :line_number, :method_name, :context_id
+                :source_file, :line_number, :method_name, :context_id, :source_digest
 
     # @rbs type: Symbol
     # @rbs base_class: untyped
     # @rbs associations: untyped
     # @rbs call_stack: Array[String]
     # @rbs context_id: untyped
+    # @rbs source_digest: String?
     # @rbs return: void
-    def initialize(type:, base_class:, associations:, call_stack:, context_id: nil)
+    def initialize(type:, base_class:, associations:, call_stack:, context_id: nil, source_digest: nil)
       @type = type
       @base_class = base_class
       @associations = normalize_associations(associations)
       @call_stack = call_stack
       @context_id = context_id
       parse_source_location
+      @source_digest = source_digest || current_source_digest
+    end
+
+    # @rbs data: Hash[String, untyped]
+    # @rbs return: Detection
+    def self.from_h(data)
+      type = data.fetch("type").to_s.to_sym
+      associations = data.fetch("associations")
+      call_stack = data.fetch("call_stack")
+      raise ArgumentError, "invalid evidence type" unless %i[n_plus_one unused_eager_loading].include?(type)
+      raise ArgumentError, "invalid evidence associations" unless associations.is_a?(Array)
+      raise ArgumentError, "invalid evidence call stack" unless call_stack.is_a?(Array)
+
+      new(
+        type: type,
+        base_class: data.fetch("base_class"),
+        associations: associations,
+        call_stack: call_stack,
+        context_id: data["context_id"],
+        source_digest: data["source_digest"]
+      )
+    end
+
+    # @rbs return: Hash[String, untyped]
+    def to_h
+      {
+        "type" => type.to_s,
+        "base_class" => model_class_name,
+        "associations" => associations.map(&:to_s),
+        "call_stack" => call_stack.map(&:to_s),
+        "context_id" => context_id,
+        "source_digest" => source_digest
+      }
     end
 
     #: () -> String
@@ -57,7 +94,7 @@ module Bullematic
 
     #: () -> Array[untyped]
     def fingerprint
-      [context_id, source_file, line_number, model_class_name, associations.sort]
+      [type, context_id, source_file, line_number, model_class_name, associations.sort]
     end
 
     private
@@ -148,6 +185,15 @@ module Bullematic
       rescue Errno::ENOENT, Errno::EACCES
         expanded
       end
+    end
+
+    # @rbs return: String?
+    def current_source_digest
+      return unless source_file && File.file?(source_file)
+
+      Digest::SHA256.hexdigest(File.binread(source_file))
+    rescue Errno::ENOENT, Errno::EACCES
+      nil
     end
   end
 end

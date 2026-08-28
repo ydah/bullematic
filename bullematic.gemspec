@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
 
   spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
     ls.readlines("\x0", chomp: true).select do |f|
-      f.start_with?(*%w[lib/ sig/]) || %w[README.md CHANGELOG.md LICENSE.txt].include?(f)
+      f.start_with?(*%w[exe/ lib/ sig/]) || %w[README.md CHANGELOG.md LICENSE.txt].include?(f)
     end
   end
   spec.bindir = "exe"

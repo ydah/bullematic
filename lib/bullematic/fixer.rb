@@ -17,6 +17,11 @@ module Bullematic
       # @rbs detection: Detection
       # @rbs return: void
       def queue(detection)
+        if EvidenceStore.recording?
+          EvidenceStore.append(detection)
+          return
+        end
+
         queue_mutex.synchronize do
           queue_store << detection unless queue_store.any? { |queued| queued.fingerprint == detection.fingerprint }
         end
@@ -80,6 +85,14 @@ module Bullematic
 
         original_source = File.binread(filepath)
         expected_digest = Digest::SHA256.digest(original_source)
+        current_hexdigest = Digest::SHA256.hexdigest(original_source)
+        detections = detections.reject do |detection|
+          stale = detection.source_digest && detection.source_digest != current_hexdigest
+          logger.log_skip(filepath, detection, "source changed since detection") if stale
+          stale
+        end
+        return if detections.empty?
+
         parse_result = AST::Parser.new(original_source, filepath: filepath).parse
         finder = AST::Finder.new(parse_result)
         rewriter = AST::Rewriter.new(original_source)

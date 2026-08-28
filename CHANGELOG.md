@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rewrite source by byte offset, validate generated Ruby, detect stale source, and write atomically.
 - Preserve complex eager-loading arguments and generate verified nested association trees.
 - Default to dry-run planning with automatic fixes disabled and backups enabled.
+- Add persistent recording and explicit `record`, `plan`, `apply`, `verify`, `fix`, and `doctor` commands.
+- Emit accurate dry-run hunks and reject evidence when its source snapshot has changed.
 
 ## [0.1.0] - 2026-01-13
 
