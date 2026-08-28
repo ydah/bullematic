@@ -2,26 +2,28 @@
 
 module Bullematic
   class Configuration
+    VALID_FIX_STRATEGIES: Array[Symbol]
+
     # @rbs skip: to avoid empty array warning
     DEFAULTS: untyped
 
-    @enabled: bool
-
-    @auto_fix: bool
-
-    @target_paths: Array[String]
-
-    @skip_paths: Array[String]
-
-    @dry_run: bool
-
-    @backup: bool
-
-    @fix_strategy: Symbol
+    @logger: Logger?
 
     @debug: bool
 
-    @logger: Logger?
+    @fix_strategy: Symbol
+
+    @backup: bool
+
+    @dry_run: bool
+
+    @skip_paths: Array[String]
+
+    @target_paths: Array[String]
+
+    @auto_fix: bool
+
+    @enabled: bool
 
     # @rbs!
     #   attr_accessor enabled: bool
@@ -105,19 +107,9 @@ module Bullematic
     #   attr_accessor fix_strategy: Symbol
     #   attr_accessor debug: bool
     #   attr_writer logger: Logger?
-    attr_accessor fix_strategy: untyped
-
-    # @rbs!
-    #   attr_accessor enabled: bool
-    #   attr_accessor auto_fix: bool
-    #   attr_accessor target_paths: Array[String]
-    #   attr_accessor skip_paths: Array[String]
-    #   attr_accessor dry_run: bool
-    #   attr_accessor backup: bool
-    #   attr_accessor fix_strategy: Symbol
-    #   attr_accessor debug: bool
-    #   attr_writer logger: Logger?
     attr_accessor debug: untyped
+
+    attr_reader fix_strategy: untyped
 
     attr_writer logger: untyped
 
@@ -126,6 +118,10 @@ module Bullematic
 
     # : () -> Logger
     def logger: () -> Logger
+
+    # @rbs strategy: Symbol
+    # @rbs return: Symbol
+    def fix_strategy=: (Symbol strategy) -> Symbol
 
     private
 

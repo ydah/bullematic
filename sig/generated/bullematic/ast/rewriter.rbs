@@ -20,9 +20,9 @@ module Bullematic
                     | ({ ?type: untyped, ?offset: untyped, ?byte_length: untyped, ?new_text: untyped, ?associations: untyped }) -> instance
       end
 
-      @source: String
-
       @modifications: Array[Modification]
+
+      @source: String
 
       # @rbs!
       #   attr_reader source: String
@@ -39,9 +39,9 @@ module Bullematic
       def initialize: (String source) -> void
 
       # @rbs query_location: Finder::QueryLocation
-      # @rbs associations: Array[Symbol]
-      # @rbs return: void
-      def add_includes: (Finder::QueryLocation query_location, Array[Symbol] associations) -> void
+      # @rbs associations: Array[untyped]
+      # @rbs return: Symbol
+      def add_includes: (Finder::QueryLocation query_location, Array[untyped] associations) -> Symbol
 
       # : () -> String
       def rewrite: () -> String
@@ -57,21 +57,37 @@ module Bullematic
       def find_chain_insert_point: (untyped node) -> Integer
 
       # @rbs query_location: Finder::QueryLocation
-      # @rbs associations: Array[Symbol]
+      # @rbs associations: Array[untyped]
       # @rbs return: bool
-      def already_has_includes?: (Finder::QueryLocation query_location, Array[Symbol] associations) -> bool
+      def already_has_includes?: (Finder::QueryLocation query_location, Array[untyped] associations) -> bool
 
       # @rbs node: untyped
       # @rbs return: Array[Symbol]
       def find_existing_includes: (untyped node) -> Array[Symbol]
 
+      # @rbs node: untyped
+      # @rbs return: Prism::CallNode?
+      def find_includes_call: (untyped node) -> Prism::CallNode?
+
       # @rbs call_node: untyped
       # @rbs return: Array[Symbol]
       def extract_associations_from_call: (untyped call_node) -> Array[Symbol]
 
+      # @rbs node: untyped
+      # @rbs associations: Array[untyped]
+      # @rbs return: void
+      def collect_literal_associations: (untyped node, Array[untyped] associations) -> void
+
       # @rbs associations: Array[Symbol]
       # @rbs return: String
       def format_associations: (Array[Symbol] associations) -> String
+
+      # @rbs association: untyped
+      # @rbs return: String
+      def format_association: (untyped association) -> String
+
+      # : () -> void
+      def validate_modifications!: () -> void
     end
   end
 end

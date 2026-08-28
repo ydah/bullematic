@@ -7,12 +7,6 @@ module Bullematic
 
       @filepath: String?
 
-      # : () -> Hash[String, untyped]
-      def self.cache: () -> Hash[String, untyped]
-
-      # : () -> void
-      def self.clear_cache: () -> void
-
       # @rbs filepath: String
       # @rbs return: untyped
       def self.parse_file: (String filepath) -> untyped

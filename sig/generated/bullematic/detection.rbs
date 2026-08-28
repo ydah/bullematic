@@ -2,19 +2,21 @@
 
 module Bullematic
   class Detection
-    @type: Symbol
+    @context_id: untyped
 
-    @base_class: untyped
-
-    @associations: Array[Symbol]
-
-    @call_stack: Array[String]
-
-    @source_file: String?
+    @method_name: String?
 
     @line_number: Integer?
 
-    @method_name: String?
+    @source_file: String?
+
+    @call_stack: Array[String]
+
+    @associations: Array[Symbol]
+
+    @base_class: untyped
+
+    @type: Symbol
 
     # @rbs!
     #   attr_reader type: Symbol
@@ -24,6 +26,7 @@ module Bullematic
     #   attr_reader source_file: String?
     #   attr_reader line_number: Integer?
     #   attr_reader method_name: String?
+    #   attr_reader context_id: untyped
     attr_reader type: untyped
 
     # @rbs!
@@ -34,6 +37,7 @@ module Bullematic
     #   attr_reader source_file: String?
     #   attr_reader line_number: Integer?
     #   attr_reader method_name: String?
+    #   attr_reader context_id: untyped
     attr_reader base_class: untyped
 
     # @rbs!
@@ -44,6 +48,7 @@ module Bullematic
     #   attr_reader source_file: String?
     #   attr_reader line_number: Integer?
     #   attr_reader method_name: String?
+    #   attr_reader context_id: untyped
     attr_reader associations: untyped
 
     # @rbs!
@@ -54,6 +59,7 @@ module Bullematic
     #   attr_reader source_file: String?
     #   attr_reader line_number: Integer?
     #   attr_reader method_name: String?
+    #   attr_reader context_id: untyped
     attr_reader call_stack: untyped
 
     # @rbs!
@@ -64,6 +70,7 @@ module Bullematic
     #   attr_reader source_file: String?
     #   attr_reader line_number: Integer?
     #   attr_reader method_name: String?
+    #   attr_reader context_id: untyped
     attr_reader source_file: untyped
 
     # @rbs!
@@ -74,6 +81,7 @@ module Bullematic
     #   attr_reader source_file: String?
     #   attr_reader line_number: Integer?
     #   attr_reader method_name: String?
+    #   attr_reader context_id: untyped
     attr_reader line_number: untyped
 
     # @rbs!
@@ -84,20 +92,36 @@ module Bullematic
     #   attr_reader source_file: String?
     #   attr_reader line_number: Integer?
     #   attr_reader method_name: String?
+    #   attr_reader context_id: untyped
     attr_reader method_name: untyped
+
+    # @rbs!
+    #   attr_reader type: Symbol
+    #   attr_reader base_class: untyped
+    #   attr_reader associations: Array[Symbol]
+    #   attr_reader call_stack: Array[String]
+    #   attr_reader source_file: String?
+    #   attr_reader line_number: Integer?
+    #   attr_reader method_name: String?
+    #   attr_reader context_id: untyped
+    attr_reader context_id: untyped
 
     # @rbs type: Symbol
     # @rbs base_class: untyped
     # @rbs associations: untyped
     # @rbs call_stack: Array[String]
+    # @rbs context_id: untyped
     # @rbs return: void
-    def initialize: (type: Symbol, base_class: untyped, associations: untyped, call_stack: Array[String]) -> void
+    def initialize: (type: Symbol, base_class: untyped, associations: untyped, call_stack: Array[String], ?context_id: untyped) -> void
 
     # : () -> String
     def model_class_name: () -> String
 
     # : () -> bool
     def fixable?: () -> bool
+
+    # : () -> Array[untyped]
+    def fingerprint: () -> Array[untyped]
 
     private
 
@@ -113,5 +137,14 @@ module Bullematic
 
     # : () -> bool
     def skip_path?: () -> bool
+
+    # @rbs filepath: String
+    # @rbs paths: Array[String]
+    # @rbs return: bool
+    def path_in?: (String filepath, Array[String] paths) -> bool
+
+    # @rbs path: String
+    # @rbs return: Pathname
+    def expand_path: (String path) -> Pathname
   end
 end

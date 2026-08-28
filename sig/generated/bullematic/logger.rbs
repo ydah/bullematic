@@ -37,6 +37,11 @@ module Bullematic
 
     # @rbs filepath: String
     # @rbs detection: Detection
+    # @rbs return: void
+    def log_plan: (String filepath, Detection detection) -> void
+
+    # @rbs filepath: String
+    # @rbs detection: Detection
     # @rbs reason: String
     # @rbs return: void
     def log_skip: (String filepath, Detection detection, String reason) -> void

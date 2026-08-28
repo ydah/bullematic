@@ -39,6 +39,15 @@ module Bullematic
       # @rbs return: QueryLocation?
       def find_query_at_line: (Integer line_number) -> QueryLocation?
 
+      # @rbs line_number: Integer
+      # @rbs return: String?
+      def find_method_name_at_line: (Integer line_number) -> String?
+
+      # @rbs model_class_name: String
+      # @rbs method_name: String?
+      # @rbs return: Array[QueryLocation]
+      def find_model_queries_in_method: (String model_class_name, String? method_name) -> Array[QueryLocation]
+
       private
 
       # @rbs node: untyped
@@ -73,6 +82,18 @@ module Bullematic
       # @rbs target_line: Integer?
       # @rbs return: bool
       def check_assignment_node: (untyped node, Array[QueryLocation] queries, String model_class_name, Integer? target_line) -> bool
+
+      # @rbs node: untyped
+      # @rbs queries: Array[QueryLocation]
+      # @rbs model_class_name: String
+      # @rbs method_name: String
+      # @rbs return: void
+      def visit_method_node: (untyped node, Array[QueryLocation] queries, String model_class_name, String method_name) -> void
+
+      # @rbs node: untyped
+      # @rbs line_number: Integer
+      # @rbs return: String?
+      def find_method_for_line: (untyped node, Integer line_number) -> String?
 
       # @rbs node: untyped
       # @rbs return: untyped

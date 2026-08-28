@@ -19,9 +19,15 @@ module Bullematic
   # @rbs @configuration: Configuration?
 
   class << self
-    # @rbs!
-    #   attr_accessor configuration: Configuration?
-    attr_accessor :configuration
+    #: () -> Configuration?
+    def configuration
+      @configuration
+    end
+
+    #: (Configuration?) -> Configuration?
+    def configuration=(configuration)
+      @configuration = configuration
+    end
 
     #: () { (Configuration) -> void } -> void
     def configure

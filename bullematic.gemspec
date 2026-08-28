@@ -20,18 +20,16 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"] = "https://github.com/ydah/bullematic/blob/main/CHANGELOG.md"
   spec.metadata["rubygems_mfa_required"] = "true"
 
-  gemspec = File.basename(__FILE__)
   spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
-    ls.readlines("\x0", chomp: true).reject do |f|
-      (f == gemspec) ||
-        f.start_with?(*%w[bin/ Gemfile .gitignore .rspec spec/ .github/])
+    ls.readlines("\x0", chomp: true).select do |f|
+      f.start_with?(*%w[lib/ sig/]) || %w[README.md CHANGELOG.md LICENSE.txt].include?(f)
     end
   end
   spec.bindir = "exe"
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "bullet", ">= 6.0"
+  spec.add_dependency "bullet", ">= 6.0", "< 9.0"
   spec.add_dependency "prism", ">= 0.24.0"
 
   spec.add_development_dependency "appraisal", "~> 2.5"

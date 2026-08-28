@@ -65,7 +65,8 @@ module Bullematic
     # @rbs assocs: untyped
     # @rbs return: Array[Symbol]
     def normalize_associations(assocs)
-      Array(assocs).filter_map do |association|
+      values = Array(assocs) #: Array[untyped]
+      values.filter_map do |association|
         association.to_sym if association.is_a?(String) || association.is_a?(Symbol)
       end.uniq
     end
@@ -140,9 +141,13 @@ module Bullematic
                    root = defined?(Rails) && Rails.respond_to?(:root) && Rails.root ? Rails.root : Dir.pwd
                    Pathname.new(root).join(pathname).expand_path
                  end
-      expanded.exist? ? expanded.realpath : expanded
-    rescue Errno::ENOENT, Errno::EACCES
-      expanded
+      return expanded unless expanded.exist?
+
+      begin
+        expanded.realpath
+      rescue Errno::ENOENT, Errno::EACCES
+        expanded
+      end
     end
   end
 end

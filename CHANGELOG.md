@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Preserve detections across complete RSpec and Minitest runs and deduplicate them safely.
+- Remove the incompatible Bullet notification constructor hook.
+- Reject ambiguous query locations and support namespaced model constants.
+- Rewrite source by byte offset, validate generated Ruby, detect stale source, and write atomically.
+- Preserve complex eager-loading arguments and generate verified nested association trees.
+- Default to dry-run planning with automatic fixes disabled and backups enabled.
+
 ## [0.1.0] - 2026-01-13
 
 - Initial release

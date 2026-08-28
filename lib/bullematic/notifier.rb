@@ -65,7 +65,6 @@ module Bullematic
 
       private
 
-      #: () -> void
       # @rbs notification: untyped
       # @rbs context_id: Integer
       # @rbs return: void
@@ -133,7 +132,8 @@ module Bullematic
           end
 
         matching = stacks.find do |stack|
-          Array(stack).any? do |frame|
+          frames = Array(stack) #: Array[untyped]
+          frames.any? do |frame|
             config.target_paths.any? { |path| frame.is_a?(String) && frame.include?(path) }
           end
         end

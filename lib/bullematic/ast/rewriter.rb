@@ -25,7 +25,7 @@ module Bullematic
       end
 
       # @rbs query_location: Finder::QueryLocation
-      # @rbs associations: Array[Symbol]
+      # @rbs associations: Array[untyped]
       # @rbs return: Symbol
       def add_includes(query_location, associations)
         associations = associations.uniq
@@ -114,7 +114,7 @@ module Bullematic
       end
 
       # @rbs query_location: Finder::QueryLocation
-      # @rbs associations: Array[Symbol]
+      # @rbs associations: Array[untyped]
       # @rbs return: bool
       def already_has_includes?(query_location, associations)
         return false if associations.any?(Hash)
@@ -164,7 +164,7 @@ module Bullematic
       end
 
       # @rbs node: untyped
-      # @rbs associations: Array[Symbol]
+      # @rbs associations: Array[untyped]
       # @rbs return: void
       def collect_literal_associations(node, associations)
         case node

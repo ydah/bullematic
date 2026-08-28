@@ -5,6 +5,8 @@ D = Steep::Diagnostic
 target :lib do
   signature "sig/generated"
   signature "sig/stubs"
+  library "digest"
+  library "tempfile"
 
   check "lib"
 

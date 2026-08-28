@@ -5,26 +5,21 @@ module Bullematic
     # : () -> void
     def self.setup: () -> void
 
-    # : () -> void
-    def self.process_notifications: () -> void
+    # @rbs context_id: untyped
+    # @rbs return: void
+    def self.process_notifications: (?context_id: untyped) -> void
 
-    # : () -> void
-    private def self.setup_notification_hook: () -> void
+    # @rbs notification: untyped
+    # @rbs context_id: Integer
+    # @rbs return: void
+    private def self.process_n_plus_one: (untyped notification, Integer context_id) -> void
 
     # @rbs notification: untyped
     # @rbs return: void
-    private def self.process_n_plus_one: (untyped notification) -> void
+    private def self.process_unused_eager_loading: (untyped notification) -> void
 
     # @rbs notification: untyped
     # @rbs return: Array[String]
     private def self.extract_call_stack: (untyped notification) -> Array[String]
-
-    module NotificationHook
-      # @rbs base_class: untyped
-      # @rbs associations: untyped
-      # @rbs path: untyped
-      # @rbs return: void
-      def initialize: (untyped base_class, untyped associations, ?untyped path) -> void
-    end
   end
 end

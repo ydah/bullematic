@@ -10,7 +10,12 @@ module Bullematic
   class FixError < Error
   end
 
+  @configuration: Configuration?
+
+  # : () -> Configuration?
   def self.configuration: () -> Configuration?
+
+  # : (Configuration?) -> Configuration?
   def self.configuration=: (Configuration?) -> Configuration?
 
   # : () { (Configuration) -> void } -> void

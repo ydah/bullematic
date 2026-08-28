@@ -15,6 +15,15 @@ module Bullematic
     # : () -> void
     def self.apply_fixes: () -> void
 
+    # : () -> Array[Detection]
+    private def self.queue_store: () -> Array[Detection]
+
+    # : () -> Mutex
+    private def self.queue_mutex: () -> Mutex
+
+    # : () -> Array[Detection]
+    private def self.drain_queue: () -> Array[Detection]
+
     # @rbs filepath: String
     # @rbs detections: Array[Detection]
     # @rbs logger: BullematicLogger
@@ -25,6 +34,45 @@ module Bullematic
     # @rbs detection: Detection
     # @rbs return: AST::Finder::QueryLocation?
     private def self.find_query_location: (AST::Finder finder, Detection detection) -> AST::Finder::QueryLocation?
+
+    # @rbs finder: AST::Finder
+    # @rbs detections: Array[Detection]
+    # @rbs logger: BullematicLogger
+    # @rbs filepath: String
+    # @rbs return: Array[Hash[Symbol, untyped]]
+    private def self.build_requests: (AST::Finder finder, Array[Detection] detections, BullematicLogger logger, String filepath) -> Array[Hash[Symbol, untyped]]
+
+    # @rbs detection: Detection
+    # @rbs candidates: Array[Detection]
+    # @rbs consumed: Array[Detection]
+    # @rbs seen: Array[String]
+    # @rbs return: Array[untyped]
+    private def self.association_tree: (Detection detection, Array[Detection] candidates, Array[Detection] consumed, Array[String] seen) -> Array[untyped]
+
+    # @rbs parent: Detection
+    # @rbs association: Symbol
+    # @rbs candidates: Array[Detection]
+    # @rbs return: Detection?
+    private def self.nested_detection: (Detection parent, Symbol association, Array[Detection] candidates) -> Detection?
+
+    # @rbs detection: Detection
+    # @rbs return: String?
+    private def self.normalized_method: (Detection detection) -> String?
+
+    # @rbs left: Detection
+    # @rbs right: Detection
+    # @rbs return: bool
+    private def self.same_execution_location?: (Detection left, Detection right) -> bool
+
+    # @rbs name: String
+    # @rbs return: untyped
+    private def self.constantize_model: (String name) -> untyped
+
+    # @rbs filepath: String
+    # @rbs source: String
+    # @rbs expected_digest: String
+    # @rbs return: void
+    private def self.atomic_write: (String filepath, String source, String expected_digest) -> void
 
     # @rbs filepath: String
     # @rbs return: void
