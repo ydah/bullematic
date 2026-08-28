@@ -37,10 +37,6 @@ module Bullematic
       # @rbs return: Array[QueryLocation]
       def find_model_queries: (String model_class_name, ?line_number: Integer?) -> Array[QueryLocation]
 
-      # @rbs line_number: Integer
-      # @rbs return: QueryLocation?
-      def find_query_at_line: (Integer line_number) -> QueryLocation?
-
       # @rbs model_class_name: String
       # @rbs line_number: Integer
       # @rbs return: Array[QueryLocation]
@@ -60,12 +56,6 @@ module Bullematic
       # @rbs skip_nodes: Set[Integer]
       # @rbs return: void
       def mark_descendant_calls: (untyped node, Set[Integer] skip_nodes) -> void
-
-      # @rbs node: untyped
-      # @rbs queries: Array[QueryLocation]
-      # @rbs target_line: Integer?
-      # @rbs return: void
-      def visit_all_queries: (untyped node, Array[QueryLocation] queries, Integer? target_line) -> void
 
       # @rbs node: untyped
       # @rbs queries: Array[QueryLocation]

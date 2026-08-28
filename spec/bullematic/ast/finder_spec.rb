@@ -73,41 +73,6 @@ RSpec.describe Bullematic::AST::Finder do
     end
   end
 
-  describe "#find_query_at_line" do
-    it "finds query at specified line" do
-      source = <<~RUBY
-        def index
-          @posts = Post.all
-        end
-      RUBY
-      result = Prism.parse(source)
-      finder = described_class.new(result)
-
-      query = finder.find_query_at_line(2)
-      expect(query).not_to be_nil
-      expect(query.method_name).to eq(:all)
-    end
-
-    it "returns nil when no query at line" do
-      source = <<~RUBY
-        def index
-          puts "hello"
-        end
-      RUBY
-      result = Prism.parse(source)
-      finder = described_class.new(result)
-
-      query = finder.find_query_at_line(2)
-      expect(query).to be_nil
-    end
-
-    it "returns nil when the line is ambiguous" do
-      finder = described_class.new(Prism.parse("Post.all; User.all"))
-
-      expect(finder.find_query_at_line(1)).to be_nil
-    end
-  end
-
   describe "#find_model_queries_for_variables_at_line" do
     it "links the accessed variable to its model query" do
       source = <<~RUBY

@@ -34,14 +34,6 @@ module Bullematic
         queries
       end
 
-      # @rbs line_number: Integer
-      # @rbs return: QueryLocation?
-      def find_query_at_line(line_number)
-        queries = [] #: Array[QueryLocation]
-        visit_all_queries(parse_result.value, queries, line_number)
-        queries.one? ? queries.first : nil
-      end
-
       # @rbs model_class_name: String
       # @rbs line_number: Integer
       # @rbs return: Array[QueryLocation]
@@ -89,30 +81,6 @@ module Bullematic
 
         node.child_nodes.compact.each do |child|
           mark_descendant_calls(child, skip_nodes)
-        end
-      end
-
-      # @rbs node: untyped
-      # @rbs queries: Array[QueryLocation]
-      # @rbs target_line: Integer?
-      # @rbs return: void
-      def visit_all_queries(node, queries, target_line)
-        return unless node.respond_to?(:child_nodes)
-
-        if node.is_a?(Prism::CallNode) && query_method?(node.name)
-          node_line = node.location.start_line
-          if target_line.nil? || node_line == target_line
-            queries << QueryLocation.new(
-              node: node,
-              location: node.location,
-              receiver: find_root_receiver(node),
-              method_name: node.name
-            )
-          end
-        end
-
-        node.child_nodes.compact.each do |child|
-          visit_all_queries(child, queries, target_line)
         end
       end
 
