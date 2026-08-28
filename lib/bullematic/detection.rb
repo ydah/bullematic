@@ -129,7 +129,7 @@ module Bullematic
 
         next unless filepath && path_in?(filepath, target_paths)
 
-        @source_file = filepath
+        @source_file = absolute_path(filepath).to_s
         @line_number = line
         @method_name = method
         break
@@ -173,13 +173,7 @@ module Bullematic
     # @rbs path: String
     # @rbs return: Pathname
     def expand_path(path)
-      pathname = Pathname.new(path)
-      expanded = if pathname.absolute?
-                   pathname.expand_path
-                 else
-                   root = defined?(Rails) && Rails.respond_to?(:root) && Rails.root ? Rails.root : Dir.pwd
-                   Pathname.new(root).join(pathname).expand_path
-                 end
+      expanded = absolute_path(path)
       return expanded unless expanded.exist?
 
       begin
@@ -187,6 +181,17 @@ module Bullematic
       rescue Errno::ENOENT, Errno::EACCES
         expanded
       end
+    end
+
+    # @rbs path: String
+    # @rbs return: Pathname
+    def absolute_path(path)
+      pathname = Pathname.new(path)
+      return pathname if path.match?(%r{\A[A-Za-z]:[\\/]})
+      return pathname.expand_path if pathname.absolute?
+
+      root = defined?(Rails) && Rails.respond_to?(:root) && Rails.root ? Rails.root : Dir.pwd
+      Pathname.new(root).join(pathname).expand_path
     end
 
     # @rbs return: String?

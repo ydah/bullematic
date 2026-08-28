@@ -177,6 +177,10 @@ module Bullematic
     # @rbs return: Pathname
     def expand_path: (String path) -> Pathname
 
+    # @rbs path: String
+    # @rbs return: Pathname
+    def absolute_path: (String path) -> Pathname
+
     # @rbs return: String?
     def current_source_digest: () -> String?
   end

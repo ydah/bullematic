@@ -150,6 +150,35 @@ RSpec.describe Bullematic::Fixer do
         expect(stats[:skipped]).to eq(1)
       end
     end
+
+    it "applies a relative backtrace frame outside the Rails working directory" do
+      Dir.mktmpdir do |root|
+        filepath = File.join(root, "app/controllers/posts_controller.rb")
+        FileUtils.mkdir_p(File.dirname(filepath))
+        File.write(filepath, "@posts = Post.all\n@posts.each { |post| post.comments.to_a }\n")
+        allow(Rails).to receive(:root).and_return(Pathname(root))
+        Bullematic.configure do |config|
+          config.target_paths = ["app/controllers"]
+          config.dry_run = false
+          config.backup = false
+          config.logger = Logger.new(File::NULL)
+        end
+
+        Dir.mktmpdir do |working_directory|
+          Dir.chdir(working_directory) do
+            described_class.queue(Bullematic::Detection.new(
+              type: :n_plus_one,
+              base_class: "Post",
+              associations: [:comments],
+              call_stack: ["app/controllers/posts_controller.rb:2:in 'block in PostsController#index'"]
+            ))
+            described_class.apply_fixes
+          end
+        end
+
+        expect(File.read(filepath)).to start_with("@posts = Post.includes(:comments).all")
+      end
+    end
   end
 
   describe "atomic writes" do

@@ -138,9 +138,32 @@ RSpec.describe Bullematic::Detection do
         ]
       )
 
-      expect(detection.source_file).to eq("app/controllers/posts_controller.rb")
+      expect(detection.source_file).to eq(Rails.root.join("app/controllers/posts_controller.rb").to_s)
       expect(detection.line_number).to eq(15)
       expect(detection.method_name).to eq("index")
+    end
+
+    it "resolves relative frames against Rails.root when the working directory differs" do
+      Dir.mktmpdir do |root|
+        source_file = File.join(root, "app/controllers/posts_controller.rb")
+        FileUtils.mkdir_p(File.dirname(source_file))
+        File.binwrite(source_file, "Post.all\n")
+        allow(Rails).to receive(:root).and_return(Pathname(root))
+
+        Dir.mktmpdir do |working_directory|
+          Dir.chdir(working_directory) do
+            detection = described_class.new(
+              type: :n_plus_one,
+              base_class: "Post",
+              associations: [:comments],
+              call_stack: ["app/controllers/posts_controller.rb:1:in 'index'"]
+            )
+
+            expect(detection.source_file).to eq(source_file)
+            expect(detection.source_digest).to eq(Digest::SHA256.hexdigest("Post.all\n"))
+          end
+        end
+      end
     end
 
     it "accepts modern single-quoted backtrace frames" do
