@@ -99,6 +99,17 @@ RSpec.describe Bullematic::AST::Rewriter do
 
       expect(rewriter.rewrite).to eq("Post.includes(comments: :likes).all")
     end
+
+    it "emits valid deeply nested association trees" do
+      source = "Post.all"
+      rewriter = described_class.new(source)
+
+      rewriter.add_includes(find_query(source, "Post"), [{ comments: { likes: :user } }])
+
+      output = rewriter.rewrite
+      expect(output).to eq("Post.includes(comments: { likes: :user }).all")
+      expect(Prism.parse(output)).to be_success
+    end
   end
 
   describe "#rewrite" do

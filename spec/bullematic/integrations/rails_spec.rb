@@ -58,8 +58,13 @@ RSpec.describe Bullematic::Middleware do
     initializer = Bullematic::Integrations::Railtie.initializers.find do |item|
       item.name == "bullematic.middleware"
     end
+    middleware = double
+    app = double(middleware: middleware)
+    allow(Rails.env).to receive(:development?).and_return(true)
+    expect(middleware).to receive(:insert_after).with(Bullet::Rack, Bullematic::Middleware)
 
     bullet_initializer = Bullet::BulletRailtie.initializers.find { |item| item.name.start_with?("bullet.") }
     expect(initializer.after).to eq(bullet_initializer.name)
+    initializer.run(app)
   end
 end

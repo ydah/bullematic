@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://badge.fury.io/rb/bullematic"><img src="https://badge.fury.io/rb/bullematic.svg" alt="Gem Version"></a>
-  <a href="https://github.com/ydah/bullematic/actions/workflows/main.yml"><img src="https://github.com/ydah/bullematic/actions/workflows/main.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/ydah/bullematic/actions/workflows/test.yml"><img src="https://github.com/ydah/bullematic/actions/workflows/test.yml/badge.svg" alt="CI"></a>
 </p>
 
 <p align="center">
@@ -115,7 +115,7 @@ end
 ### Rails
 
 Bullematic auto-loads via Railtie in development and test environments when the gem is loaded.
-The development middleware records detections after the response body closes when run through `bullematic record`; it never retains or rewrites detections inside a normal web request.
+The development middleware records detections before Bullet clears its request collector when run through `bullematic record`; it never retains or rewrites detections inside a normal web request.
 
 ## Configuration
 

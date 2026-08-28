@@ -54,7 +54,7 @@ module Bullematic
         load_application
         configure(dry_run)
         detections = EvidenceStore.read.select { |detection| detection.type == :n_plus_one }
-        raise Error, "no recorded evidence in #{EvidenceStore.path}" if detections.empty?
+        raise Error, "no recorded N+1 evidence in #{EvidenceStore.path}" if detections.empty?
 
         record_file = ENV.delete(EvidenceStore::ENV_KEY)
         begin
@@ -73,7 +73,9 @@ module Bullematic
       # @rbs argv: Array[String]
       # @rbs return: Integer
       def fix(argv)
-        verify_after = argv.delete("--verify")
+        separator = argv.index("--") || argv.length
+        verify_index = argv.first(separator).index("--verify")
+        verify_after = argv.delete_at(verify_index) if verify_index
         command = command_args(argv)
         status = record(command)
         return status unless status.zero?
@@ -89,8 +91,8 @@ module Bullematic
       def verify(command)
         load_application
         configure(true)
-        original = EvidenceStore.read
-        raise Error, "no recorded evidence in #{EvidenceStore.path}" if original.empty?
+        original = EvidenceStore.read.select { |detection| detection.type == :n_plus_one }
+        raise Error, "no recorded N+1 evidence in #{EvidenceStore.path}" if original.empty?
 
         command = read_command(EvidenceStore.path) if command.empty?
         raise Error, "verify requires a recorded command" if command.empty?
@@ -100,8 +102,8 @@ module Bullematic
           status = run_command(command, file.path)
           return status unless status.zero?
 
-          remaining = EvidenceStore.read(file.path)
-          raise Error, "#{remaining.size} Bullet warning(s) remain" unless remaining.empty?
+          remaining = EvidenceStore.read(file.path).count { |detection| detection.type == :n_plus_one }
+          raise Error, "#{remaining} N+1 warning(s) remain" unless remaining.zero?
         end
 
         puts "Bullematic verification passed"
@@ -150,7 +152,10 @@ module Bullematic
       # @rbs command: Array[String]
       # @rbs return: void
       def write_command(evidence_path, command)
-        File.binwrite("#{evidence_path}.command.json", JSON.generate(command))
+        path = "#{evidence_path}.command.json"
+        raise Error, "symlink command files are unsupported" if File.symlink?(path)
+
+        File.binwrite(path, JSON.generate(command))
       end
 
       # @rbs evidence_path: String

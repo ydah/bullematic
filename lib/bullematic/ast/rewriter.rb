@@ -182,21 +182,23 @@ module Bullematic
         end
       end
 
-      # @rbs associations: Array[Symbol]
+      # @rbs associations: Array[untyped]
       # @rbs return: String
       def format_associations(associations)
-        associations.map { |association| format_association(association) }.join(", ")
+        associations.map { |association| format_association(association, false) }.join(", ")
       end
 
       # @rbs association: untyped
+      # @rbs braces: bool
       # @rbs return: String
-      def format_association(association)
+      def format_association(association, braces = true)
         case association
         when Hash
-          association.map do |key, value|
+          contents = association.map do |key, value|
             key_source = key.to_s.match?(/\A[a-z_]\w*\z/) ? "#{key}:" : "#{key.inspect} =>"
             "#{key_source} #{format_association(value)}"
           end.join(", ")
+          braces ? "{ #{contents} }" : contents
         when Array
           "[#{association.map { |nested| format_association(nested) }.join(', ')}]"
         else

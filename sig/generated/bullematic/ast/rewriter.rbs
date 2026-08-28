@@ -78,13 +78,14 @@ module Bullematic
       # @rbs return: void
       def collect_literal_associations: (untyped node, Array[untyped] associations) -> void
 
-      # @rbs associations: Array[Symbol]
+      # @rbs associations: Array[untyped]
       # @rbs return: String
-      def format_associations: (Array[Symbol] associations) -> String
+      def format_associations: (Array[untyped] associations) -> String
 
       # @rbs association: untyped
+      # @rbs braces: bool
       # @rbs return: String
-      def format_association: (untyped association) -> String
+      def format_association: (untyped association, ?bool braces) -> String
 
       # : () -> void
       def validate_modifications!: () -> void

@@ -70,6 +70,37 @@ RSpec.describe Bullematic::CLI do
     expect(described_class.run(["doctor"])).to eq(0)
   end
 
+  it "preserves child command flags after the separator" do
+    expect(described_class).to receive(:record).with(["command", "--verify"]).and_return(1)
+
+    expect(described_class.run(["fix", "--", "command", "--verify"])).to eq(1)
+  end
+
+  it "refuses to overwrite a symlink command file" do
+    Dir.mktmpdir do |directory|
+      target = File.join(directory, "target")
+      evidence = File.join(directory, "evidence.jsonl")
+      File.write(target, "keep")
+      File.symlink(target, "#{evidence}.command.json")
+
+      expect do
+        described_class.send(:write_command, evidence, ["true"])
+      end.to raise_error(Bullematic::Error, /symlink/)
+      expect(File.read(target)).to eq("keep")
+    end
+  end
+
+  it "ignores non-N+1 warnings during verification" do
+    n_plus_one = instance_double(Bullematic::Detection, type: :n_plus_one)
+    unused = instance_double(Bullematic::Detection, type: :unused_eager_loading)
+    allow(Bullematic::EvidenceStore).to receive(:read).and_return([n_plus_one], [unused])
+    allow(described_class).to receive(:read_command).and_return(["true"])
+    allow(described_class).to receive(:run_command).and_return(0)
+
+    expect { expect(described_class.run(["verify"])).to eq(0) }
+      .to output(/verification passed/).to_stdout
+  end
+
   it "fails when recorded evidence cannot produce a safe fix" do
     Dir.mktmpdir do |directory|
       source = File.join(directory, "posts.rb")
