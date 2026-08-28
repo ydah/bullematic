@@ -56,6 +56,21 @@ RSpec.describe Bullematic::AST::Finder do
       queries = finder.find_model_queries("Post")
       expect(queries.size).to eq(1)
     end
+
+    it "finds namespaced and root constants" do
+      source = "Admin::Post.all\n::Post.all"
+      finder = described_class.new(Prism.parse(source))
+
+      expect(finder.find_model_queries("Admin::Post").size).to eq(1)
+      expect(finder.find_model_queries("Post").size).to eq(1)
+    end
+
+    it "does not treat non-query assignments as queries" do
+      source = "@post = Post.new\n@count = Post.count"
+      finder = described_class.new(Prism.parse(source))
+
+      expect(finder.find_model_queries("Post")).to be_empty
+    end
   end
 
   describe "#find_query_at_line" do
@@ -84,6 +99,12 @@ RSpec.describe Bullematic::AST::Finder do
 
       query = finder.find_query_at_line(2)
       expect(query).to be_nil
+    end
+
+    it "returns nil when the line is ambiguous" do
+      finder = described_class.new(Prism.parse("Post.all; User.all"))
+
+      expect(finder.find_query_at_line(1)).to be_nil
     end
   end
 end

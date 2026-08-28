@@ -5,6 +5,8 @@ require "logger"
 
 module Bullematic
   class Configuration
+    VALID_FIX_STRATEGIES = %i[includes preload eager_load].freeze #: Array[Symbol]
+
     # @rbs skip: to avoid empty array warning
     DEFAULTS = { #: Hash[Symbol, untyped]
       enabled: true,
@@ -39,7 +41,8 @@ module Bullematic
     #   attr_accessor debug: bool
     #   attr_writer logger: Logger?
     attr_accessor :enabled, :auto_fix, :target_paths, :skip_paths,
-                  :dry_run, :backup, :fix_strategy, :debug
+                  :dry_run, :backup, :debug
+    attr_reader :fix_strategy
     attr_writer :logger
 
     #: () -> void
@@ -50,6 +53,14 @@ module Bullematic
     #: () -> Logger
     def logger
       @logger ||= default_logger
+    end
+
+    # @rbs strategy: Symbol
+    # @rbs return: Symbol
+    def fix_strategy=(strategy)
+      raise ArgumentError, "invalid fix strategy: #{strategy.inspect}" unless VALID_FIX_STRATEGIES.include?(strategy)
+
+      @fix_strategy = strategy
     end
 
     private

@@ -73,4 +73,23 @@ RSpec.describe Bullematic::Fixer do
       expect(described_class.detection_queue).to be_empty
     end
   end
+
+  describe "atomic writes" do
+    it "refuses to overwrite a source changed after planning" do
+      Tempfile.create(["fixer", ".rb"]) do |file|
+        file.write("Post.all")
+        file.flush
+        digest = Digest::SHA256.digest("Post.all")
+        file.rewind
+        file.truncate(0)
+        file.write("User.all")
+        file.flush
+
+        expect do
+          described_class.send(:atomic_write, file.path, "Post.includes(:comments).all", digest)
+        end.to raise_error(Bullematic::FixError, /source changed/)
+        expect(File.binread(file.path)).to eq("User.all")
+      end
+    end
+  end
 end

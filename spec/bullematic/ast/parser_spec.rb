@@ -18,21 +18,22 @@ RSpec.describe Bullematic::AST::Parser do
     end
   end
 
-  describe ".cache" do
-    after { described_class.clear_cache }
+  describe ".parse_file" do
+    it "parses the current contents on every call" do
+      Tempfile.create(["parser", ".rb"]) do |file|
+        file.write("Post.all")
+        file.flush
+        first = described_class.parse_file(file.path)
 
-    it "returns empty hash initially" do
-      described_class.clear_cache
-      expect(described_class.cache).to eq({})
-    end
-  end
+        file.rewind
+        file.truncate(0)
+        file.write("User.all")
+        file.flush
+        second = described_class.parse_file(file.path)
 
-  describe ".clear_cache" do
-    it "clears the cache" do
-      described_class.cache["test"] = "value"
-      described_class.clear_cache
-
-      expect(described_class.cache).to eq({})
+        expect(first.value.slice).to eq("Post.all")
+        expect(second.value.slice).to eq("User.all")
+      end
     end
   end
 end

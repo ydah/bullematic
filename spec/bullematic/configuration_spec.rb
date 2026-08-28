@@ -42,4 +42,10 @@ RSpec.describe Bullematic::Configuration do
       expect(config.logger).to be_a(Logger)
     end
   end
+
+  describe "#fix_strategy=" do
+    it "rejects unsupported strategies" do
+      expect { config.fix_strategy = :destroy }.to raise_error(ArgumentError, /invalid fix strategy/)
+    end
+  end
 end

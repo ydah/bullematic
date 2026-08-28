@@ -46,7 +46,6 @@ module Bullematic
     def reset!
       @configuration = nil
       Fixer.clear
-      AST::Parser.clear_cache
     end
   end
 end

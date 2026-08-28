@@ -39,6 +39,44 @@ RSpec.describe Bullematic::AST::Rewriter do
 
       expect(result).to eq("@posts = Post.includes(:comments, :author).all")
     end
+
+    it "uses byte offsets when multibyte text precedes the query" do
+      source = "# 投稿一覧\n@posts = Post.all"
+      rewriter = described_class.new(source)
+
+      rewriter.add_includes(find_query(source, "Post"), [:comments])
+
+      expect(rewriter.rewrite).to eq("# 投稿一覧\n@posts = Post.includes(:comments).all")
+    end
+
+    it "preserves complex existing includes arguments" do
+      source = "Post.includes(comments: :author, *DEFAULTS).all"
+      rewriter = described_class.new(source)
+
+      rewriter.add_includes(find_query(source, "Post"), [:tags])
+
+      expect(rewriter.rewrite).to eq("Post.includes(:tags).includes(comments: :author, *DEFAULTS).all")
+    end
+
+    it "combines repeated edits for the same query" do
+      source = "Post.all"
+      query = find_query(source, "Post")
+      rewriter = described_class.new(source)
+
+      rewriter.add_includes(query, [:comments])
+      rewriter.add_includes(query, %i[comments author])
+
+      expect(rewriter.rewrite).to eq("Post.includes(:comments, :author).all")
+    end
+
+    it "emits valid literals for non-identifier symbols" do
+      source = "Post.all"
+      rewriter = described_class.new(source)
+
+      rewriter.add_includes(find_query(source, "Post"), [:'odd-name'])
+
+      expect(rewriter.rewrite).to eq('Post.includes(:"odd-name").all')
+    end
   end
 
   describe "#rewrite" do

@@ -1,7 +1,9 @@
 # rbs_inline: enabled
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
+require "tempfile"
 
 module Bullematic
   class Fixer
@@ -75,10 +77,12 @@ module Bullematic
       def process_file(filepath, detections, logger)
         return unless File.exist?(filepath)
 
-        original_source = File.read(filepath)
-        parse_result = AST::Parser.parse_file(filepath)
+        original_source = File.binread(filepath)
+        expected_digest = Digest::SHA256.digest(original_source)
+        parse_result = AST::Parser.new(original_source, filepath: filepath).parse
         finder = AST::Finder.new(parse_result)
         rewriter = AST::Rewriter.new(original_source)
+        changed = [] #: Array[Detection]
 
         detections.each do |detection|
           location = find_query_location(finder, detection)
@@ -88,19 +92,25 @@ module Bullematic
             next
           end
 
-          rewriter.add_includes(location, detection.associations)
-          logger.log_fix(filepath, detection)
+          result = rewriter.add_includes(location, detection.associations)
+          if result == :changed
+            changed << detection
+          else
+            logger.log_skip(filepath, detection, result.to_s.tr("_", " "))
+          end
         end
 
         new_source = rewriter.rewrite
 
         return if new_source == original_source
 
+        AST::Parser.new(new_source, filepath: filepath).parse
+
         if Bullematic.configuration&.dry_run
           logger.log_dry_run(filepath, original_source, new_source)
         else
-          backup_file(filepath) if Bullematic.configuration&.backup
-          File.write(filepath, new_source)
+          atomic_write(filepath, new_source, expected_digest)
+          changed.each { |detection| logger.log_fix(filepath, detection) }
         end
       end
 
@@ -113,7 +123,8 @@ module Bullematic
           line_number: detection.line_number
         )
 
-        return queries.first unless queries.empty?
+        return queries.first if queries.size == 1
+        return nil if queries.size > 1
 
         method_name = detection.method_name
         if method_name.nil? && detection.line_number
@@ -129,9 +140,29 @@ module Bullematic
         fallback_queries = finder.find_model_queries(detection.model_class_name)
         return fallback_queries.first if fallback_queries.size == 1
 
-        return nil unless detection.line_number
+        nil
+      end
 
-        finder.find_query_at_line(detection.line_number)
+      # @rbs filepath: String
+      # @rbs source: String
+      # @rbs expected_digest: String
+      # @rbs return: void
+      def atomic_write(filepath, source, expected_digest)
+        File.open(filepath, File::RDONLY) do |file|
+          file.flock(File::LOCK_EX)
+          raise FixError, "source changed while planning fix" unless Digest::SHA256.digest(file.read) == expected_digest
+
+          backup_file(filepath) if Bullematic.configuration&.backup
+          mode = file.stat.mode
+          Tempfile.create([".bullematic", ".tmp"], File.dirname(filepath)) do |tempfile|
+            tempfile.binmode
+            tempfile.write(source)
+            tempfile.flush
+            tempfile.fsync
+            File.chmod(mode, tempfile.path)
+            File.rename(tempfile.path, filepath)
+          end
+        end
       end
 
       # @rbs filepath: String

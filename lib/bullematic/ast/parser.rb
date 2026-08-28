@@ -10,26 +10,10 @@ module Bullematic
       # @rbs @filepath: String?
 
       class << self
-        #: () -> Hash[String, untyped]
-        def cache
-          @cache ||= {} #: Hash[String, untyped]
-        end
-
-        #: () -> void
-        def clear_cache
-          @cache = {} #: Hash[String, untyped]
-        end
-
         # @rbs filepath: String
         # @rbs return: untyped
         def parse_file(filepath)
-          return cache[filepath] if cache.key?(filepath)
-
-          result = Prism.parse_file(filepath)
-          raise ParseError, result.errors.map(&:message).join("\n") if result.failure?
-
-          cache[filepath] = result
-          result
+          new(File.binread(filepath), filepath: filepath).parse
         end
       end
 

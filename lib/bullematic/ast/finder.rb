@@ -39,7 +39,7 @@ module Bullematic
       def find_query_at_line(line_number)
         queries = [] #: Array[QueryLocation]
         visit_all_queries(parse_result.value, queries, line_number)
-        queries.first
+        queries.one? ? queries.first : nil
       end
 
       # @rbs line_number: Integer
@@ -152,6 +152,7 @@ module Bullematic
 
         value = node.value
         return false unless value.is_a?(Prism::CallNode)
+        return false unless query_method?(value.name)
 
         root_receiver = find_root_receiver(value)
         return false unless model_constant?(root_receiver, model_class_name)
@@ -215,9 +216,9 @@ module Bullematic
       # @rbs model_class_name: String
       # @rbs return: bool
       def model_constant?(node, model_class_name)
-        return false unless node.is_a?(Prism::ConstantReadNode)
+        return false unless node.is_a?(Prism::ConstantReadNode) || node.is_a?(Prism::ConstantPathNode)
 
-        node.name.to_s == model_class_name
+        node.full_name.delete_prefix("::") == model_class_name.delete_prefix("::")
       end
 
       # @rbs method_name: Symbol

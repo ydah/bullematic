@@ -146,7 +146,7 @@ RSpec.describe "N+1 Auto Fix Integration", type: :integration do
       Bullematic::Fixer.apply_fixes
 
       fixed_content = File.read(test_file)
-      expect(fixed_content).to include("includes(:user, :comments)")
+      expect(fixed_content).to include("includes(:comments).includes(:user)")
     end
   end
 
@@ -283,7 +283,7 @@ RSpec.describe "N+1 Auto Fix Integration", type: :integration do
 
       Bullematic::Fixer.apply_fixes
       fixed_content = File.read(test_file)
-      expect(fixed_content).to include("includes(:user, :comments)")
+      expect(fixed_content).to include("includes(:comments).includes(:user)")
     end
   end
 end

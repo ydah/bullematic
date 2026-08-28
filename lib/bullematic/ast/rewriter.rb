@@ -26,31 +26,27 @@ module Bullematic
 
       # @rbs query_location: Finder::QueryLocation
       # @rbs associations: Array[Symbol]
-      # @rbs return: void
+      # @rbs return: Symbol
       def add_includes(query_location, associations)
+        associations = associations.uniq
+        return :unsupported if associations.empty?
+
         existing_call = find_includes_call(query_location.node)
         if existing_call
           existing = extract_associations_from_call(existing_call)
-          return if associations.all? { |assoc| existing.include?(assoc) }
-
-          merged = (existing + associations).uniq
-          args_location = existing_call.arguments&.location
-          return unless args_location
-
-          @modifications << Modification.new(
-            type: :replace,
-            offset: args_location.start_offset,
-            byte_length: args_location.end_offset - args_location.start_offset,
-            new_text: format_associations(merged),
-            associations: associations
-          )
-          return
+          return :already_present if associations.all? { |assoc| existing.include?(assoc) }
         end
 
-        return if already_has_includes?(query_location, associations)
+        return :already_present if already_has_includes?(query_location, associations)
 
         strategy = Bullematic.configuration&.fix_strategy || :includes
         insert_point = find_insert_point(query_location)
+        pending = @modifications.find { |mod| mod.type == :insert && mod.offset == insert_point }
+        if pending
+          pending.associations = (pending.associations + associations).uniq
+          pending.new_text = ".#{strategy}(#{format_associations(pending.associations)})"
+          return :changed
+        end
 
         assoc_string = format_associations(associations)
         new_text = ".#{strategy}(#{assoc_string})"
@@ -62,24 +58,22 @@ module Bullematic
           new_text: new_text,
           associations: associations
         )
+        :changed
       end
 
       #: () -> String
       def rewrite
         return @source if @modifications.empty?
 
+        validate_modifications!
         sorted = @modifications.sort_by { |m| -m.offset }
 
         result = @source.dup
         sorted.each do |mod|
-          case mod.type
-          when :insert
-            result.insert(mod.offset, mod.new_text)
-          when :replace
-            result[mod.offset, mod.byte_length] = mod.new_text
-          when :delete
-            result[mod.offset, mod.byte_length] = ""
-          end
+          before = result.byteslice(0, mod.offset)
+          after = result.byteslice(mod.offset + mod.byte_length..)
+          replacement = mod.type == :delete ? "" : mod.new_text
+          result = before + replacement + after
         end
 
         result
@@ -93,7 +87,7 @@ module Bullematic
         node = query_location.node
         receiver = query_location.receiver
 
-        if receiver.is_a?(Prism::ConstantReadNode)
+        if receiver.is_a?(Prism::ConstantReadNode) || receiver.is_a?(Prism::ConstantPathNode)
           receiver.location.end_offset
         else
           find_chain_insert_point(node)
@@ -157,26 +151,46 @@ module Bullematic
         return [] unless call_node.arguments
 
         associations = [] #: Array[Symbol]
-        call_node.arguments.arguments.each do |arg|
-          case arg
-          when Prism::SymbolNode
-            associations << arg.value.to_sym
-          when Prism::ArrayNode
-            arg.elements.each do |elem|
-              associations << elem.value.to_sym if elem.is_a?(Prism::SymbolNode)
-            end
+        call_node.arguments.arguments.each { |arg| collect_literal_associations(arg, associations) }
+        associations
+      end
+
+      # @rbs node: untyped
+      # @rbs associations: Array[Symbol]
+      # @rbs return: void
+      def collect_literal_associations(node, associations)
+        case node
+        when Prism::SymbolNode
+          associations << node.value.to_sym
+        when Prism::ArrayNode
+          node.elements.each { |element| collect_literal_associations(element, associations) }
+        when Prism::KeywordHashNode, Prism::HashNode
+          node.elements.each do |element|
+            next unless element.is_a?(Prism::AssocNode)
+
+            collect_literal_associations(element.key, associations)
+            collect_literal_associations(element.value, associations)
           end
         end
-        associations
       end
 
       # @rbs associations: Array[Symbol]
       # @rbs return: String
       def format_associations(associations)
-        if associations.size == 1
-          ":#{associations.first}"
-        else
-          associations.map { |a| ":#{a}" }.join(", ")
+        associations.map(&:inspect).join(", ")
+      end
+
+      #: () -> void
+      def validate_modifications!
+        @modifications.each do |modification|
+          limit = modification.offset + modification.byte_length
+          raise FixError, "edit is outside the source" if modification.offset.negative? || limit > @source.bytesize
+        end
+
+        ranges = @modifications.reject { |modification| modification.byte_length.zero? }
+        ranges.combination(2) do |left, right|
+          overlap = left.offset < right.offset + right.byte_length && right.offset < left.offset + left.byte_length
+          raise FixError, "overlapping edits" if overlap
         end
       end
     end
