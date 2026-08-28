@@ -41,7 +41,10 @@ module Bullematic
         grouped = pending.group_by(&:source_file)
 
         grouped.each do |filepath, detections|
-          next unless filepath
+          unless filepath
+            detections.each { |detection| logger.log_skip("(unknown)", detection, "source unavailable") }
+            next
+          end
 
           process_file(filepath, detections, logger)
         rescue ParseError, FixError => e
@@ -81,7 +84,10 @@ module Bullematic
       # @rbs logger: BullematicLogger
       # @rbs return: void
       def process_file(filepath, detections, logger)
-        return unless File.exist?(filepath)
+        unless File.exist?(filepath)
+          detections.each { |detection| logger.log_skip(filepath, detection, "source file not found") }
+          return
+        end
 
         original_source = File.binread(filepath)
         expected_digest = Digest::SHA256.digest(original_source)

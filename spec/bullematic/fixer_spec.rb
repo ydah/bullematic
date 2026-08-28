@@ -73,6 +73,30 @@ RSpec.describe Bullematic::Fixer do
       expect(described_class.detection_queue).to be_empty
     end
 
+    it "reports unavailable sources as skipped" do
+      output = StringIO.new
+      Bullematic.configuration.logger = Logger.new(output)
+      missing_file = Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:comments],
+        call_stack: ["app/controllers/missing_controller.rb:15:in `index'"]
+      )
+      unknown_source = Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:comments],
+        call_stack: []
+      )
+
+      described_class.queue(missing_file)
+      described_class.queue(unknown_source)
+
+      expect(described_class.apply_fixes[:skipped]).to eq(2)
+      expect(output.string).to include("source file not found")
+      expect(output.string).to include("source unavailable")
+    end
+
     it "refuses evidence captured before the source changed" do
       Dir.mktmpdir do |directory|
         filepath = File.join(directory, "posts.rb")
