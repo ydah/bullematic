@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bundler/setup"
+require "logger"
 
 if ENV["COVERAGE"]
   require "simplecov"

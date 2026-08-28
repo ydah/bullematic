@@ -1,0 +1,9 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gemspec path: "../"
+
+gem "bullet", "~> 6.1"
+gem "rails", "~> 6.1.0"
+gem "sqlite3", "~> 1.4"

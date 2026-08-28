@@ -67,3 +67,37 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           files: coverage/coverage.xml
+
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Run type checks
+        run: bundle exec rake typecheck
+
+      - name: Build packaged gem
+        run: gem build bullematic.gemspec
+
+  bullet-compatibility:
+    runs-on: ubuntu-latest
+
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/bullet_6.gemfile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Run Bullet 6 contract and integration tests
+        run: bundle exec rspec spec/bullematic/notifier_spec.rb spec/integration/n_plus_one_fix_spec.rb

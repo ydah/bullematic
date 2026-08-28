@@ -29,3 +29,9 @@ appraise "rails-main" do
   gem "rails", github: "rails/rails", branch: "main"
   gem "sqlite3", "~> 2.1"
 end
+
+appraise "bullet-6" do
+  gem "bullet", "~> 6.1"
+  gem "rails", "~> 6.1.0"
+  gem "sqlite3", "~> 1.4"
+end
