@@ -23,7 +23,7 @@ Bullematic hooks into [Bullet](https://github.com/flyerhzm/bullet) notifications
 
 ## Features
 
-- Automatic N+1 fixes for Rails scopes and queries
+- High-confidence N+1 fixes for direct Active Record queries
 - Runtime capture via Bullet notifications
 - AST-based rewrites powered by Prism
 - Dry-run mode and optional backups
@@ -46,7 +46,7 @@ bundle install
 ## Requirements
 
 - Ruby 3.1+
-- Bullet 6.0+
+- Bullet 6.0 through 8.x
 
 ## Quick Start
 
@@ -61,11 +61,13 @@ Bullematic.configure do |config|
   config.auto_fix = true
   config.target_paths = %w[app/controllers app/models app/services]
   config.skip_paths = %w[app/controllers/admin]
-  config.dry_run = false  # Set to true to preview changes without applying
+  config.dry_run = true  # Preview changes before explicitly enabling writes
   config.fix_strategy = :includes  # :includes, :preload, or :eager_load
   config.backup = true  # Create backup files before modifying
 end
 ```
+
+After reviewing the planned changes, set `dry_run = false` to apply them. Ambiguous or unverifiable detections are skipped.
 
 2. Enable Bullematic at runtime:
 
@@ -104,6 +106,7 @@ end
 ### Rails
 
 Bullematic auto-loads via Railtie in development and test environments when the gem is loaded.
+The development middleware records detections after the response body closes; it does not rewrite source files inside a web request.
 
 ## Configuration
 
@@ -124,9 +127,9 @@ Bullematic auto-loads via Railtie in development and test environments when the 
 1. Bullet detects an N+1 query during request or test execution
 2. Bullematic captures the notification and stack trace
 3. At the end of the run, Bullematic parses the file with Prism
-4. The AST finder locates the query that triggered the N+1
+4. The AST finder requires an exact query location or traces the accessed relation variable to one query
 5. The AST rewriter inserts the appropriate `includes` call
-6. The file is written back (or logged in dry-run mode)
+6. The file is parsed again and atomically replaced (or logged in dry-run mode)
 
 ### Example Transformation
 
@@ -152,8 +155,8 @@ end
 
 ## Limitations
 
-- Dynamic queries built with `send` or metaprogramming may not be fixable
-- Complex conditional branches can be hard to rewrite
+- Dynamic scopes, `send`, metaprogramming, memoized relations, and cross-file relation builders are skipped
+- Ambiguous query origins and associations that reflection cannot verify are skipped
 - Already-optimized queries are skipped
 
 ## Development
