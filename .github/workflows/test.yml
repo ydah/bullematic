@@ -83,7 +83,13 @@ jobs:
         run: bundle exec rake typecheck
 
       - name: Build packaged gem
-        run: gem build bullematic.gemspec
+        run: gem build bullematic.gemspec --output /tmp/bullematic.gem
+
+      - name: Install packaged gem
+        run: gem install --local /tmp/bullematic.gem --ignore-dependencies
+
+      - name: Smoke test packaged executable
+        run: bullematic doctor
 
   bullet-compatibility:
     runs-on: ubuntu-latest
@@ -101,3 +107,34 @@ jobs:
 
       - name: Run Bullet 6 contract and integration tests
         run: bundle exec rspec spec/bullematic/notifier_spec.rb spec/integration/n_plus_one_fix_spec.rb
+
+  prism-minimum:
+    runs-on: ubuntu-latest
+
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/prism_0.24.gemfile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          bundler-cache: true
+
+      - name: Run AST and integration tests with minimum Prism
+        run: bundle exec rspec spec/bullematic/ast spec/integration/n_plus_one_fix_spec.rb
+
+  windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Run unit tests on Windows
+        run: bundle exec rspec spec/bullematic

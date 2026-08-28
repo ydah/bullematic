@@ -35,3 +35,9 @@ appraise "bullet-6" do
   gem "rails", "~> 6.1.0"
   gem "sqlite3", "~> 1.4"
 end
+
+appraise "prism-0.24" do
+  gem "prism", "~> 0.24.0"
+  gem "rails", "~> 7.0.0"
+  gem "sqlite3", "~> 1.6"
+end
