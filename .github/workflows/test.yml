@@ -105,8 +105,8 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
 
-      - name: Run Bullet 6 contract and integration tests
-        run: bundle exec rspec spec/bullematic/notifier_spec.rb spec/bullematic/integrations/rails_spec.rb spec/integration/n_plus_one_fix_spec.rb
+      - name: Run full suite with Bullet 6
+        run: bundle exec rake
 
   prism-minimum:
     runs-on: ubuntu-latest
