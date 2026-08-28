@@ -71,6 +71,32 @@ RSpec.describe Bullematic::AST::Rewriter do
       expect(rewriter.rewrite).to eq("Post.includes(:tags).includes(comments: :author, *DEFAULTS).all")
     end
 
+    it "does not mistake a nested association for a top-level association" do
+      source = "Post.includes(comments: :likes).all"
+      rewriter = described_class.new(source)
+
+      rewriter.add_includes(find_query(source, "Post"), [:likes])
+
+      expect(rewriter.rewrite).to eq("Post.includes(:likes).includes(comments: :likes).all")
+    end
+
+    it "matches an existing nested association structurally" do
+      source = "Post.includes(:comments => :likes).all"
+      rewriter = described_class.new(source)
+
+      expect(rewriter.add_includes(find_query(source, "Post"), [{ comments: :likes }])).to eq(:already_present)
+      expect(rewriter.rewrite).to eq(source)
+    end
+
+    it "does not accept a longer nested name as the requested association" do
+      source = "Post.includes(comments: :likes_count).all"
+      rewriter = described_class.new(source)
+
+      rewriter.add_includes(find_query(source, "Post"), [{ comments: :likes }])
+
+      expect(rewriter.rewrite).to start_with("Post.includes(comments: :likes).includes(comments: :likes_count)")
+    end
+
     it "combines repeated edits for the same query" do
       source = "Post.all"
       query = find_query(source, "Post")

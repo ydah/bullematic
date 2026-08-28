@@ -31,18 +31,6 @@ module Bullematic
         associations = associations.uniq
         return :unsupported if associations.empty?
 
-        existing_call = find_includes_call(query_location.node)
-        if existing_call
-          if associations.any?(Hash)
-            existing_source = existing_call.arguments&.location&.slice
-            return :already_present if existing_source&.include?(format_associations(associations))
-          end
-
-          existing = extract_associations_from_call(existing_call)
-          requested = associations.reject { |association| association.is_a?(Hash) }
-          return :already_present if requested.size == associations.size && requested.all? { |assoc| existing.include?(assoc) }
-        end
-
         return :already_present if already_has_includes?(query_location, associations)
 
         strategy = Bullematic.configuration&.fix_strategy || :includes
@@ -117,8 +105,6 @@ module Bullematic
       # @rbs associations: Array[untyped]
       # @rbs return: bool
       def already_has_includes?(query_location, associations)
-        return false if associations.any?(Hash)
-
         existing = find_existing_includes(query_location.node)
         return false if existing.empty?
 
@@ -141,24 +127,12 @@ module Bullematic
         includes
       end
 
-      # @rbs node: untyped
-      # @rbs return: Prism::CallNode?
-      def find_includes_call(node)
-        current = node
-        while current.is_a?(Prism::CallNode)
-          return current if %i[includes preload eager_load].include?(current.name)
-
-          current = current.receiver
-        end
-        nil
-      end
-
       # @rbs call_node: untyped
-      # @rbs return: Array[Symbol]
+      # @rbs return: Array[untyped]
       def extract_associations_from_call(call_node)
         return [] unless call_node.arguments
 
-        associations = [] #: Array[Symbol]
+        associations = [] #: Array[untyped]
         call_node.arguments.arguments.each { |arg| collect_literal_associations(arg, associations) }
         associations
       end
@@ -173,12 +147,29 @@ module Bullematic
         when Prism::ArrayNode
           node.elements.each { |element| collect_literal_associations(element, associations) }
         when Prism::KeywordHashNode, Prism::HashNode
-          node.elements.each do |element|
+          association = literal_association(node)
+          associations << association if association
+        end
+      end
+
+      # @rbs node: untyped
+      # @rbs return: untyped
+      def literal_association(node)
+        case node
+        when Prism::SymbolNode
+          node.value.to_sym
+        when Prism::ArrayNode
+          values = node.elements.map { |element| literal_association(element) }
+          values unless values.any?(&:nil?)
+        when Prism::KeywordHashNode, Prism::HashNode
+          pairs = node.elements.map do |element|
             next unless element.is_a?(Prism::AssocNode)
 
-            collect_literal_associations(element.key, associations)
-            collect_literal_associations(element.value, associations)
+            key = literal_association(element.key)
+            value = literal_association(element.value)
+            [key, value] if key && value
           end
+          pairs.to_h if pairs.none?(&:nil?)
         end
       end
 

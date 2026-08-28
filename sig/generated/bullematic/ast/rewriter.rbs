@@ -65,18 +65,18 @@ module Bullematic
       # @rbs return: Array[Symbol]
       def find_existing_includes: (untyped node) -> Array[Symbol]
 
-      # @rbs node: untyped
-      # @rbs return: Prism::CallNode?
-      def find_includes_call: (untyped node) -> Prism::CallNode?
-
       # @rbs call_node: untyped
-      # @rbs return: Array[Symbol]
-      def extract_associations_from_call: (untyped call_node) -> Array[Symbol]
+      # @rbs return: Array[untyped]
+      def extract_associations_from_call: (untyped call_node) -> Array[untyped]
 
       # @rbs node: untyped
       # @rbs associations: Array[untyped]
       # @rbs return: void
       def collect_literal_associations: (untyped node, Array[untyped] associations) -> void
+
+      # @rbs node: untyped
+      # @rbs return: untyped
+      def literal_association: (untyped node) -> untyped
 
       # @rbs associations: Array[untyped]
       # @rbs return: String
