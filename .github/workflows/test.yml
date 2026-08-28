@@ -106,7 +106,7 @@ jobs:
           bundler-cache: true
 
       - name: Run Bullet 6 contract and integration tests
-        run: bundle exec rspec spec/bullematic/notifier_spec.rb spec/integration/n_plus_one_fix_spec.rb
+        run: bundle exec rspec spec/bullematic/notifier_spec.rb spec/bullematic/integrations/rails_spec.rb spec/integration/n_plus_one_fix_spec.rb
 
   prism-minimum:
     runs-on: ubuntu-latest

@@ -3,6 +3,7 @@
 module Bullematic
   module Integrations
     class Railtie < ::Rails::Railtie
+      BULLET_MIDDLEWARE_INITIALIZER: untyped
     end
   end
 

@@ -1,17 +1,25 @@
 # rbs_inline: enabled
 # frozen_string_literal: true
 
-require "rack/body_proxy"
-
 module Bullematic
   module Integrations
     class Railtie < ::Rails::Railtie
+      BULLET_MIDDLEWARE_INITIALIZER = Bullet::BulletRailtie.initializers.find do |initializer|
+        initializer.name.start_with?("bullet.")
+      end&.name
+
       initializer "bullematic.configure" do |_app|
         Bullematic.setup_bullet_hook if Rails.env.development? || Rails.env.test?
       end
 
-      initializer "bullematic.middleware" do |app|
-        app.middleware.use Bullematic::Middleware if Rails.env.development?
+      initializer "bullematic.middleware", after: BULLET_MIDDLEWARE_INITIALIZER do |app|
+        next unless Rails.env.development?
+
+        if defined?(Bullet::Rack)
+          app.middleware.insert_after Bullet::Rack, Bullematic::Middleware
+        else
+          app.middleware.use Bullematic::Middleware
+        end
       end
     end
   end
@@ -28,13 +36,9 @@ module Bullematic
     # @rbs env: Hash[String, untyped]
     # @rbs return: untyped
     def call(env)
-      return @app.call(env) unless Bullematic.enabled?
-
-      status, headers, body = @app.call(env)
-      [status, headers, Rack::BodyProxy.new(body) { capture_notifications(env) }]
-    rescue StandardError
+      @app.call(env)
+    ensure
       capture_notifications(env)
-      raise
     end
 
     private

@@ -1,6 +1,8 @@
 # rbs_inline: enabled
 # frozen_string_literal: true
 
+require "bullet"
+
 require_relative "bullematic/version"
 require_relative "bullematic/configuration"
 require_relative "bullematic/logger"

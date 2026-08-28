@@ -32,13 +32,6 @@ module Rails
   end
 end
 
-module Rack
-  class BodyProxy
-    def initialize: (untyped) { () -> void } -> void
-    def close: () -> void
-  end
-end
-
 module ActiveSupport
   class StringInquirer < String
     def development?: () -> bool
@@ -48,6 +41,13 @@ module ActiveSupport
 end
 
 module Bullet
+  class BulletRailtie
+    def self.initializers: () -> Array[untyped]
+  end
+
+  class Rack
+  end
+
   def self.enable?: () -> bool
   def self.start_request: () -> void
   def self.end_request: () -> void
