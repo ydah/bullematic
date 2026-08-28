@@ -89,6 +89,19 @@ module Bullematic
       def add_block_receiver_names: (untyped node, Integer line_number, Array[Symbol] names) -> void
 
       # @rbs node: untyped
+      # @rbs line_number: Integer
+      # @rbs return: untyped
+      def method_scope_at_line: (untyped node, Integer line_number) -> untyped
+
+      # @rbs node: untyped
+      # @rbs name: Symbol
+      # @rbs start_line: Integer
+      # @rbs end_line: Integer
+      # @rbs scope: untyped
+      # @rbs return: bool
+      def variable_written_between?: (untyped node, Symbol name, Integer start_line, Integer end_line, untyped scope) -> bool
+
+      # @rbs node: untyped
       # @rbs return: untyped
       def find_root_receiver: (untyped node) -> untyped
 

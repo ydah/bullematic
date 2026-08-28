@@ -155,27 +155,7 @@ module Bullematic
       # @rbs return: Array[String]
       def extract_call_stack(notification)
         callers = notification.instance_variable_get(:@callers)
-        return callers if callers && !callers.empty?
-
-        config = Bullematic.configuration
-        return caller unless config
-
-        call_stacks = Bullet::Detector::Association.send(:call_stacks) if defined?(Bullet::Detector::Association)
-        stacks =
-          if call_stacks&.respond_to?(:registry)
-            call_stacks.registry.values
-          else
-            []
-          end
-
-        matching = stacks.find do |stack|
-          frames = Array(stack) #: Array[untyped]
-          frames.any? do |frame|
-            config.target_paths.any? { |path| frame.is_a?(String) && frame.include?(path) }
-          end
-        end
-
-        matching || caller
+        callers.is_a?(Array) ? callers.map(&:to_s) : []
       end
     end
 

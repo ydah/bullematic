@@ -164,7 +164,7 @@ end
 
 ## Limitations
 
-- Dynamic scopes, `send`, metaprogramming, memoized relations, and cross-file relation builders are skipped
+- Dynamic scopes, `send`, metaprogramming, memoized relations, and cross-method/file relation builders are skipped
 - Ambiguous query origins and associations that reflection cannot verify are skipped
 - Already-optimized queries are skipped
 

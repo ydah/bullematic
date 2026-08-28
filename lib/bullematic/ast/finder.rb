@@ -40,8 +40,13 @@ module Bullematic
       def find_model_queries_for_variables_at_line(model_class_name, line_number)
         names = variable_names_at_line(parse_result.value, line_number)
         add_block_receiver_names(parse_result.value, line_number, names)
+        scope = method_scope_at_line(parse_result.value, line_number)
         find_model_queries(model_class_name).select do |query|
-          query.target_name && names.include?(query.target_name)
+          query.target_name &&
+            names.include?(query.target_name) &&
+            query.location.end_line <= line_number &&
+            method_scope_at_line(parse_result.value, query.location.start_line).equal?(scope) &&
+            !variable_written_between?(scope || parse_result.value, query.target_name, query.location.end_line, line_number, scope)
         end
       end
 
@@ -173,6 +178,38 @@ module Bullematic
 
         node.child_nodes.compact.each { |child| add_block_receiver_names(child, line_number, names) }
         names.uniq!
+      end
+
+      # @rbs node: untyped
+      # @rbs line_number: Integer
+      # @rbs return: untyped
+      def method_scope_at_line(node, line_number)
+        return unless node.respond_to?(:child_nodes)
+        return unless line_number.between?(node.location.start_line, node.location.end_line)
+
+        node.child_nodes.compact.each do |child|
+          scope = method_scope_at_line(child, line_number)
+          return scope if scope
+        end
+        node if node.is_a?(Prism::DefNode)
+      end
+
+      # @rbs node: untyped
+      # @rbs name: Symbol
+      # @rbs start_line: Integer
+      # @rbs end_line: Integer
+      # @rbs scope: untyped
+      # @rbs return: bool
+      def variable_written_between?(node, name, start_line, end_line, scope)
+        return false unless node.respond_to?(:child_nodes)
+        return false if node.is_a?(Prism::DefNode) && !node.equal?(scope)
+
+        written = node.respond_to?(:name) && node.name == name &&
+                  node.class.name.match?(/\APrism::(?:Instance|Local)Variable(?:And|Operator|Or)?WriteNode\z/) &&
+                  node.location.start_line > start_line && node.location.start_line <= end_line
+        written || node.child_nodes.compact.any? do |child|
+          variable_written_between?(child, name, start_line, end_line, scope)
+        end
       end
 
       # @rbs node: untyped

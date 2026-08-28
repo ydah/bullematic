@@ -113,6 +113,46 @@ RSpec.describe Bullematic::AST::Finder do
 
       expect(queries.map(&:target_name)).to eq([:@posts])
     end
+
+    it "rejects a relation variable reassigned before the access" do
+      source = <<~RUBY
+        def index
+          posts = Post.all
+          posts = fallback_posts
+          posts.each { |post| post.comments.to_a }
+        end
+      RUBY
+      finder = described_class.new(Prism.parse(source))
+
+      expect(finder.find_model_queries_for_variables_at_line("Post", 4)).to be_empty
+    end
+
+    it "rejects a relation query from another method" do
+      source = <<~RUBY
+        def load_posts
+          @posts = Post.all
+        end
+
+        def index
+          @posts.each { |post| post.comments.to_a }
+        end
+      RUBY
+      finder = described_class.new(Prism.parse(source))
+
+      expect(finder.find_model_queries_for_variables_at_line("Post", 6)).to be_empty
+    end
+
+    it "rejects a relation query that occurs after the access" do
+      source = <<~RUBY
+        def index
+          posts.each { |post| post.comments.to_a }
+          posts = Post.all
+        end
+      RUBY
+      finder = described_class.new(Prism.parse(source))
+
+      expect(finder.find_model_queries_for_variables_at_line("Post", 2)).to be_empty
+    end
   end
 
   describe "#nested_association?" do

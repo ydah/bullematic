@@ -312,6 +312,20 @@ RSpec.describe Bullematic::Fixer do
       expect(described_class.send(:find_query_location, finder, detection)).to be_nil
     end
 
+    it "does not select an unrelated model query merely because it shares the access line" do
+      finder = Bullematic::AST::Finder.new(
+        Prism.parse("discarded = Post.all; posts.each { |post| post.comments.to_a }")
+      )
+      detection = Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:comments],
+        call_stack: ["app/controllers/posts_controller.rb:1:in 'index'"]
+      )
+
+      expect(described_class.send(:find_query_location, finder, detection)).to be_nil
+    end
+
     it "selects the query assigned to the variable used at the access site" do
       source = <<~RUBY
         def index

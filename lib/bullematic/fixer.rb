@@ -140,25 +140,13 @@ module Bullematic
       # @rbs detection: Detection
       # @rbs return: AST::Finder::QueryLocation?
       def find_query_location(finder, detection)
-        queries = if detection.line_number
-                    finder.find_model_queries(
-                      detection.model_class_name,
-                      line_number: detection.line_number
-                    )
-                  else
-                    []
-                  end
-
-        return queries.first if queries.size == 1
-        return nil if queries.size > 1
-
         return nil unless detection.line_number
 
-        variable_queries = finder.find_model_queries_for_variables_at_line(
+        queries = finder.find_model_queries_for_variables_at_line(
           detection.model_class_name,
           detection.line_number
         )
-        variable_queries.one? ? variable_queries.first : nil
+        queries.one? ? queries.first : nil
       end
 
       # @rbs finder: AST::Finder

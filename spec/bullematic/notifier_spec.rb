@@ -45,4 +45,22 @@ RSpec.describe Bullematic::Notifier do
       )
     end
   end
+
+  it "does not guess callers from an unrelated Bullet registry entry" do
+    Dir.mktmpdir do |directory|
+      filepath = File.join(directory, "posts.rb")
+      FileUtils.touch(filepath)
+      Bullematic.configure { |config| config.target_paths = [directory] }
+      notification = Bullet::Notification::NPlusOneQuery.allocate
+      allow(notification).to receive(:base_class).and_return("Post")
+      allow(notification).to receive(:associations).and_return([:comments])
+      call_stacks = Struct.new(:registry).new({ unrelated: ["#{filepath}:1:in 'index'"] })
+      allow(Bullet::Detector::Association).to receive(:send).and_call_original
+      allow(Bullet::Detector::Association).to receive(:send).with(:call_stacks).and_return(call_stacks)
+
+      described_class.send(:process_n_plus_one, notification, "example")
+
+      expect(Bullematic::Fixer.detection_queue).to be_empty
+    end
+  end
 end

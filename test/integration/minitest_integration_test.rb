@@ -26,7 +26,7 @@ class MinitestIntegrationTest < ActionDispatch::IntegrationTest
 
   test "applies fixes" do
     Tempfile.create(["posts", ".rb"]) do |file|
-      file.write("Post.all")
+      file.write("@posts = Post.all\n@posts.each { |post| post.comments.to_a }\n")
       file.flush
 
       Bullematic.configure do |config|
@@ -40,12 +40,12 @@ class MinitestIntegrationTest < ActionDispatch::IntegrationTest
         type: :n_plus_one,
         base_class: "Post",
         associations: [:comments],
-        call_stack: ["#{file.path}:1:in `index'"]
+        call_stack: ["#{file.path}:2:in `index'"]
       ))
 
       Bullematic::Fixer.apply_fixes
 
-      assert_equal "Post.includes(:comments).all", File.read(file.path)
+      assert_includes File.read(file.path), "Post.includes(:comments).all"
     end
   end
 
