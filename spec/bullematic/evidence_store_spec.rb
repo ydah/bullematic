@@ -44,6 +44,18 @@ RSpec.describe Bullematic::EvidenceStore do
     end
   end
 
+  it "refuses to truncate a symlink evidence file" do
+    Dir.mktmpdir do |directory|
+      target = File.join(directory, "target")
+      evidence = File.join(directory, "evidence.jsonl")
+      File.write(target, "keep")
+      File.symlink(target, evidence)
+
+      expect { described_class.clear(evidence) }.to raise_error(Bullematic::Error, /symlink/)
+      expect(File.read(target)).to eq("keep")
+    end
+  end
+
   it "keeps complete JSON lines from parallel worker processes" do
     Dir.mktmpdir do |directory|
       source = File.join(directory, "posts.rb")

@@ -24,5 +24,9 @@ module Bullematic
     # @rbs filepath: String
     # @rbs return: Array[Detection]
     def self.read: (?String filepath) -> Array[Detection]
+
+    # @rbs filepath: String
+    # @rbs return: void
+    private def self.reject_symlink!: (String filepath) -> void
   end
 end

@@ -25,6 +25,7 @@ module Bullematic
       # @rbs return: void
       def append(detection, filepath = path)
         FileUtils.mkdir_p(File.dirname(filepath))
+        reject_symlink!(filepath)
         File.open(filepath, File::WRONLY | File::CREAT | File::APPEND, 0o600) do |file|
           file.flock(File::LOCK_EX)
           file.puts(JSON.generate(detection.to_h))
@@ -35,6 +36,7 @@ module Bullematic
       # @rbs return: void
       def clear(filepath = path)
         FileUtils.mkdir_p(File.dirname(filepath))
+        reject_symlink!(filepath)
         File.open(filepath, File::WRONLY | File::CREAT | File::TRUNC, 0o600) {}
       end
 
@@ -51,6 +53,14 @@ module Bullematic
         detections.uniq(&:fingerprint)
       rescue JSON::ParserError, KeyError, ArgumentError, TypeError => error
         raise Error, "invalid evidence file #{filepath}: #{error.message}"
+      end
+
+      private
+
+      # @rbs filepath: String
+      # @rbs return: void
+      def reject_symlink!(filepath)
+        raise Error, "symlink evidence files are unsupported" if File.symlink?(filepath)
       end
     end
   end

@@ -266,6 +266,7 @@ module Bullematic
       # @rbs return: void
       def atomic_write(filepath, source, expected_digest)
         raise FixError, "symlink sources are unsupported" if File.symlink?(filepath)
+        raise FixError, "read-only sources are unsupported" if (File.stat(filepath).mode & 0o222).zero?
 
         lock_name = "bullematic-#{Digest::SHA256.hexdigest(File.expand_path(filepath))}.lock"
         File.open(File.join(Dir.tmpdir, lock_name), File::RDWR | File::CREAT, 0o600) do |lock|
@@ -295,6 +296,8 @@ module Bullematic
       # @rbs return: void
       def backup_file(filepath)
         backup_path = "#{filepath}.bullematic.bak"
+        raise FixError, "symlink backup files are unsupported" if File.symlink?(backup_path)
+
         FileUtils.cp(filepath, backup_path) unless File.exist?(backup_path)
       end
     end

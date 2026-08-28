@@ -158,6 +158,47 @@ RSpec.describe Bullematic::Fixer do
         expect(File.read(target)).to eq("Post.all")
       end
     end
+
+    it "refuses to replace a read-only source" do
+      Tempfile.create(["fixer", ".rb"]) do |file|
+        file.write("Post.all")
+        file.flush
+        File.chmod(0o444, file.path)
+
+        expect do
+          described_class.send(
+            :atomic_write,
+            file.path,
+            "Post.includes(:comments).all",
+            Digest::SHA256.digest("Post.all")
+          )
+        end.to raise_error(Bullematic::FixError, /read-only/)
+        expect(File.binread(file.path)).to eq("Post.all")
+      ensure
+        File.chmod(0o600, file.path) if File.exist?(file.path)
+      end
+    end
+
+    it "refuses to write through a symlink backup" do
+      Dir.mktmpdir do |directory|
+        source = File.join(directory, "posts.rb")
+        outside = File.join(directory, "outside")
+        File.write(source, "Post.all")
+        File.symlink(outside, "#{source}.bullematic.bak")
+        Bullematic.configuration.backup = true
+
+        expect do
+          described_class.send(
+            :atomic_write,
+            source,
+            "Post.includes(:comments).all",
+            Digest::SHA256.digest("Post.all")
+          )
+        end.to raise_error(Bullematic::FixError, /symlink backup/)
+        expect(File.read(source)).to eq("Post.all")
+        expect(File).not_to exist(outside)
+      end
+    end
   end
 
   describe "query evidence" do
