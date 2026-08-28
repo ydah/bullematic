@@ -39,8 +39,9 @@ module Bullematic
 
       # @rbs model_class_name: String
       # @rbs line_number: Integer
+      # @rbs associations: Array[Symbol]
       # @rbs return: Array[QueryLocation]
-      def find_model_queries_for_variables_at_line: (String model_class_name, Integer line_number) -> Array[QueryLocation]
+      def find_model_queries_for_variables_at_line: (String model_class_name, Integer line_number, Array[Symbol] associations) -> Array[QueryLocation]
 
       # @rbs parent_association: Symbol
       # @rbs child_associations: Array[Symbol]
@@ -79,14 +80,21 @@ module Bullematic
 
       # @rbs node: untyped
       # @rbs line_number: Integer
+      # @rbs associations: Array[Symbol]
       # @rbs return: Array[Symbol]
-      def variable_names_at_line: (untyped node, Integer line_number) -> Array[Symbol]
+      def association_receiver_names_at_line: (untyped node, Integer line_number, Array[Symbol] associations) -> Array[Symbol]
 
       # @rbs node: untyped
       # @rbs line_number: Integer
       # @rbs names: Array[Symbol]
       # @rbs return: void
       def add_block_receiver_names: (untyped node, Integer line_number, Array[Symbol] names) -> void
+
+      # @rbs node: untyped
+      # @rbs name: Symbol
+      # @rbs line_number: Integer
+      # @rbs return: bool
+      def block_parameter_at_line?: (untyped node, Symbol name, Integer line_number) -> bool
 
       # @rbs node: untyped
       # @rbs line_number: Integer

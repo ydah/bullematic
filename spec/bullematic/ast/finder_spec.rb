@@ -84,7 +84,7 @@ RSpec.describe Bullematic::AST::Finder do
       RUBY
       finder = described_class.new(Prism.parse(source))
 
-      queries = finder.find_model_queries_for_variables_at_line("Post", 4)
+      queries = finder.find_model_queries_for_variables_at_line("Post", 4, [:comments])
 
       expect(queries.size).to eq(1)
       expect(queries.first.target_name).to eq(:@posts)
@@ -94,7 +94,7 @@ RSpec.describe Bullematic::AST::Finder do
       source = "posts = Post.all\nposts.each { |post| post.comments.to_a }"
       finder = described_class.new(Prism.parse(source))
 
-      queries = finder.find_model_queries_for_variables_at_line("Post", 2)
+      queries = finder.find_model_queries_for_variables_at_line("Post", 2, [:comments])
 
       expect(queries.size).to eq(1)
       expect(queries.first.target_name).to eq(:posts)
@@ -109,7 +109,7 @@ RSpec.describe Bullematic::AST::Finder do
       RUBY
       finder = described_class.new(Prism.parse(source))
 
-      queries = finder.find_model_queries_for_variables_at_line("Post", 3)
+      queries = finder.find_model_queries_for_variables_at_line("Post", 3, [:comments])
 
       expect(queries.map(&:target_name)).to eq([:@posts])
     end
@@ -124,7 +124,7 @@ RSpec.describe Bullematic::AST::Finder do
       RUBY
       finder = described_class.new(Prism.parse(source))
 
-      expect(finder.find_model_queries_for_variables_at_line("Post", 4)).to be_empty
+      expect(finder.find_model_queries_for_variables_at_line("Post", 4, [:comments])).to be_empty
     end
 
     it "rejects a relation query from another method" do
@@ -139,7 +139,7 @@ RSpec.describe Bullematic::AST::Finder do
       RUBY
       finder = described_class.new(Prism.parse(source))
 
-      expect(finder.find_model_queries_for_variables_at_line("Post", 6)).to be_empty
+      expect(finder.find_model_queries_for_variables_at_line("Post", 6, [:comments])).to be_empty
     end
 
     it "rejects a relation query that occurs after the access" do
@@ -151,7 +151,31 @@ RSpec.describe Bullematic::AST::Finder do
       RUBY
       finder = described_class.new(Prism.parse(source))
 
-      expect(finder.find_model_queries_for_variables_at_line("Post", 2)).to be_empty
+      expect(finder.find_model_queries_for_variables_at_line("Post", 2, [:comments])).to be_empty
+    end
+
+    it "ignores relation variables merely mentioned on the association access line" do
+      source = <<~RUBY
+        def index
+          posts = Post.all
+          others.each { |post| warn(posts.inspect); post.comments.to_a }
+        end
+      RUBY
+      finder = described_class.new(Prism.parse(source))
+
+      expect(finder.find_model_queries_for_variables_at_line("Post", 3, [:comments])).to be_empty
+    end
+
+    it "rejects a query hidden by a block parameter with the same name" do
+      source = <<~RUBY
+        def index
+          post = Post.first
+          posts.each { |post| post.comments.to_a }
+        end
+      RUBY
+      finder = described_class.new(Prism.parse(source))
+
+      expect(finder.find_model_queries_for_variables_at_line("Post", 3, [:comments])).to be_empty
     end
   end
 

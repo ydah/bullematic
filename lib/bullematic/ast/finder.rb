@@ -36,14 +36,16 @@ module Bullematic
 
       # @rbs model_class_name: String
       # @rbs line_number: Integer
+      # @rbs associations: Array[Symbol]
       # @rbs return: Array[QueryLocation]
-      def find_model_queries_for_variables_at_line(model_class_name, line_number)
-        names = variable_names_at_line(parse_result.value, line_number)
+      def find_model_queries_for_variables_at_line(model_class_name, line_number, associations)
+        names = association_receiver_names_at_line(parse_result.value, line_number, associations)
         add_block_receiver_names(parse_result.value, line_number, names)
         scope = method_scope_at_line(parse_result.value, line_number)
         find_model_queries(model_class_name).select do |query|
           query.target_name &&
             names.include?(query.target_name) &&
+            !block_parameter_at_line?(parse_result.value, query.target_name, line_number) &&
             query.location.end_line <= line_number &&
             method_scope_at_line(parse_result.value, query.location.start_line).equal?(scope) &&
             !variable_written_between?(scope || parse_result.value, query.target_name, query.location.end_line, line_number, scope)
@@ -146,16 +148,21 @@ module Bullematic
 
       # @rbs node: untyped
       # @rbs line_number: Integer
+      # @rbs associations: Array[Symbol]
       # @rbs return: Array[Symbol]
-      def variable_names_at_line(node, line_number)
+      def association_receiver_names_at_line(node, line_number, associations)
         return [] unless node.respond_to?(:child_nodes)
 
         names = [] #: Array[Symbol]
-        if (node.is_a?(Prism::InstanceVariableReadNode) || node.is_a?(Prism::LocalVariableReadNode)) &&
-           node.location.start_line == line_number
-          names << node.name
+        if node.is_a?(Prism::CallNode) && associations.include?(node.name) && node.location.start_line == line_number
+          receiver = find_root_receiver(node)
+          if receiver.is_a?(Prism::InstanceVariableReadNode) || receiver.is_a?(Prism::LocalVariableReadNode)
+            names << receiver.name
+          end
         end
-        node.child_nodes.compact.each { |child| names.concat(variable_names_at_line(child, line_number)) }
+        node.child_nodes.compact.each do |child|
+          names.concat(association_receiver_names_at_line(child, line_number, associations))
+        end
         names.uniq
       end
 
@@ -178,6 +185,22 @@ module Bullematic
 
         node.child_nodes.compact.each { |child| add_block_receiver_names(child, line_number, names) }
         names.uniq!
+      end
+
+      # @rbs node: untyped
+      # @rbs name: Symbol
+      # @rbs line_number: Integer
+      # @rbs return: bool
+      def block_parameter_at_line?(node, name, line_number)
+        return false unless node.respond_to?(:child_nodes)
+
+        if node.is_a?(Prism::CallNode) && node.block &&
+           line_number.between?(node.block.location.start_line, node.block.location.end_line)
+          parameters = node.block.parameters&.parameters&.requireds || []
+          return true if parameters.any? { |parameter| parameter.name == name }
+        end
+
+        node.child_nodes.compact.any? { |child| block_parameter_at_line?(child, name, line_number) }
       end
 
       # @rbs node: untyped

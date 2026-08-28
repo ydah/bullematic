@@ -144,7 +144,8 @@ module Bullematic
 
         queries = finder.find_model_queries_for_variables_at_line(
           detection.model_class_name,
-          detection.line_number
+          detection.line_number,
+          detection.associations
         )
         queries.one? ? queries.first : nil
       end
@@ -309,6 +310,7 @@ module Bullematic
       def backup_file(filepath)
         backup_path = "#{filepath}.bullematic.bak"
         raise FixError, "symlink backup files are unsupported" if File.symlink?(backup_path)
+        raise FixError, "backup path is not a regular file" if File.exist?(backup_path) && !File.file?(backup_path)
 
         FileUtils.cp(filepath, backup_path) unless File.exist?(backup_path)
       end

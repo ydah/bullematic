@@ -279,6 +279,25 @@ RSpec.describe Bullematic::Fixer do
         expect(File).not_to exist(outside)
       end
     end
+
+    it "refuses to write when the backup path is not a regular file" do
+      Dir.mktmpdir do |directory|
+        source = File.join(directory, "posts.rb")
+        File.write(source, "Post.all")
+        Dir.mkdir("#{source}.bullematic.bak")
+        Bullematic.configuration.backup = true
+
+        expect do
+          described_class.send(
+            :atomic_write,
+            source,
+            "Post.includes(:comments).all",
+            Digest::SHA256.digest("Post.all")
+          )
+        end.to raise_error(Bullematic::FixError, /backup path/)
+        expect(File.read(source)).to eq("Post.all")
+      end
+    end
   end
 
   describe "query evidence" do
