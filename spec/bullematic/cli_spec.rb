@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bullematic/cli"
+require "open3"
 
 RSpec.describe Bullematic::CLI do
   around do |example|
@@ -15,7 +16,22 @@ RSpec.describe Bullematic::CLI do
       source = File.join(directory, "posts.rb")
       script = File.join(directory, "record.rb")
       evidence = File.join(directory, "evidence.jsonl")
+      config_directory = File.join(directory, "config")
+      FileUtils.mkdir_p(config_directory)
       File.write(source, "@posts = Post.all\n@posts.each { |post| post.comments.to_a }\n")
+      File.write(File.join(config_directory, "environment.rb"), <<~RUBY)
+        require "bullematic"
+        Reflection = Struct.new(:name) { def polymorphic? = false }
+        class Post
+          def self.reflect_on_association(name)
+            Reflection.new(name) if name == :comments
+          end
+        end
+        Bullematic.configure do |config|
+          config.target_paths = [#{directory.inspect}]
+          config.logger = Logger.new(File::NULL)
+        end
+      RUBY
       File.write(script, <<~RUBY)
         require "bullematic"
         Bullematic.configure { |config| config.target_paths = [#{directory.inspect}] }
@@ -29,18 +45,24 @@ RSpec.describe Bullematic::CLI do
           ))
         end
       RUBY
-      ENV[Bullematic::EvidenceStore::ENV_KEY] = evidence
-      Bullematic.configure do |config|
-        config.target_paths = [directory]
-        config.logger = Logger.new(File::NULL)
-      end
-      command = [Gem.ruby, "-I#{File.expand_path('../../lib', __dir__)}", script]
+      lib = File.expand_path("../../lib", __dir__)
+      executable = File.expand_path("../../exe/bullematic", __dir__)
+      cli = [Gem.ruby, "-I#{lib}", executable]
+      command = [Gem.ruby, "-I#{lib}", script]
+      environment = { Bullematic::EvidenceStore::ENV_KEY => evidence }
 
-      expect(described_class.run(["record", "--", *command])).to eq(0)
+      _output, error, status = Open3.capture3(environment, *cli, "record", "--", *command, chdir: directory)
+      expect(error).to be_empty
+      expect(status).to be_success
       expect(Bullematic::EvidenceStore.read(evidence).size).to eq(1)
-      expect(described_class.run(["apply"])).to eq(0)
+      _output, error, status = Open3.capture3(environment, *cli, "apply", chdir: directory)
+      expect(error).to be_empty
+      expect(status).to be_success
       expect(File.read(source)).to include("Post.includes(:comments).all")
-      expect(described_class.run(["verify"])).to eq(0)
+      output, error, status = Open3.capture3(environment, *cli, "verify", chdir: directory)
+      expect(error).to be_empty
+      expect(status).to be_success
+      expect(output).to include("verification passed")
     end
   end
 
