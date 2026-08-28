@@ -44,8 +44,14 @@ module Bullematic
     def fixable?
       !source_file.nil? &&
         !source_file.empty? &&
+        !associations.empty? &&
         target_path? &&
         !skip_path?
+    end
+
+    #: () -> Array[untyped]
+    def fingerprint
+      [source_file, line_number, model_class_name, associations.sort]
     end
 
     private
@@ -53,7 +59,9 @@ module Bullematic
     # @rbs assocs: untyped
     # @rbs return: Array[Symbol]
     def normalize_associations(assocs)
-      Array(assocs).map(&:to_sym)
+      Array(assocs).filter_map do |association|
+        association.to_sym if association.is_a?(String) || association.is_a?(Symbol)
+      end.uniq
     end
 
     #: () -> void
@@ -63,8 +71,8 @@ module Bullematic
 
       target_paths = config.target_paths
 
-      @call_stack.each do |frame|
-        next unless frame.is_a?(String)
+      @call_stack.each do |raw_frame|
+        frame = raw_frame.to_s
 
         match = frame.match(/\A(.+):(\d+)(?::in `(.+)')?/)
         next unless match

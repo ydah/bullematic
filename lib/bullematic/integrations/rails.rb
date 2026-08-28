@@ -28,13 +28,11 @@ module Bullematic
     def call(env)
       return @app.call(env) unless Bullematic.enabled?
 
-      Bullematic::Fixer.clear
-
-      response = @app.call(env)
-
-      Bullematic::Fixer.apply_fixes if Bullematic.configuration&.auto_fix
-
-      response
+      @app.call(env)
+    ensure
+      if Bullematic.enabled? && defined?(Bullet) && Bullet.notification?
+        Bullematic::Notifier.process_notifications
+      end
     end
   end
 end

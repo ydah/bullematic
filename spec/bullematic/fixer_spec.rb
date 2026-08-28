@@ -27,6 +27,19 @@ RSpec.describe Bullematic::Fixer do
 
       expect(described_class.detection_queue).to include(detection)
     end
+
+    it "deduplicates the same detection" do
+      2.times do
+        described_class.queue(Bullematic::Detection.new(
+          type: :n_plus_one,
+          base_class: "Post",
+          associations: [:comments],
+          call_stack: ["app/controllers/posts_controller.rb:2:in `index'"]
+        ))
+      end
+
+      expect(described_class.detection_queue.size).to eq(1)
+    end
   end
 
   describe ".clear" do

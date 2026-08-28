@@ -8,27 +8,30 @@ module Bullematic
     class << self
       #: () -> Array[Detection]
       def detection_queue
-        @detection_queue ||= [] #: Array[Detection]
+        queue_mutex.synchronize { queue_store.dup }
       end
 
       # @rbs detection: Detection
       # @rbs return: void
       def queue(detection)
-        detection_queue << detection
+        queue_mutex.synchronize do
+          queue_store << detection unless queue_store.any? { |queued| queued.fingerprint == detection.fingerprint }
+        end
       end
 
       #: () -> void
       def clear
-        @detection_queue = [] #: Array[Detection]
+        queue_mutex.synchronize { @detection_queue = [] }
       end
 
       #: () -> void
       def apply_fixes
-        return if detection_queue.empty?
+        pending = drain_queue
+        return if pending.empty?
 
         logger = BullematicLogger.new
 
-        grouped = detection_queue.group_by(&:source_file)
+        grouped = pending.group_by(&:source_file)
 
         grouped.each do |filepath, detections|
           next unless filepath
@@ -42,10 +45,28 @@ module Bullematic
         end
 
         logger.log_summary
-        clear
       end
 
       private
+
+      #: () -> Array[Detection]
+      def queue_store
+        @detection_queue ||= [] #: Array[Detection]
+      end
+
+      #: () -> Mutex
+      def queue_mutex
+        @queue_mutex ||= Mutex.new
+      end
+
+      #: () -> Array[Detection]
+      def drain_queue
+        queue_mutex.synchronize do
+          pending = queue_store
+          @detection_queue = []
+          pending
+        end
+      end
 
       # @rbs filepath: String
       # @rbs detections: Array[Detection]

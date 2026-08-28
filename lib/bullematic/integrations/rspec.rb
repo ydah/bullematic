@@ -8,17 +8,23 @@ module Bullematic
         #: () -> void
         def setup
           ::RSpec.configure do |config|
+            config.before(:suite) do
+              Bullematic::Fixer.clear
+            end
+
             config.before(:each) do
               if Bullematic.enabled?
                 Bullet.start_request if defined?(Bullet) && Bullet.enable?
-                Bullematic::Fixer.clear
               end
             end
 
             config.after(:each) do
               if Bullematic.enabled? && defined?(Bullet) && Bullet.enable?
-                Bullematic::Notifier.process_notifications if Bullet.notification?
-                Bullet.end_request
+                begin
+                  Bullematic::Notifier.process_notifications if Bullet.notification?
+                ensure
+                  Bullet.end_request
+                end
               end
             end
 

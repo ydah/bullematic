@@ -32,6 +32,17 @@ RSpec.describe Bullematic::Detection do
 
       expect(detection.associations).to eq(%i[comments author])
     end
+
+    it "drops invalid and duplicate associations" do
+      detection = described_class.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:comments, "comments", nil, Object.new],
+        call_stack: []
+      )
+
+      expect(detection.associations).to eq([:comments])
+    end
   end
 
   describe "#model_class_name" do
@@ -81,6 +92,19 @@ RSpec.describe Bullematic::Detection do
           base_class: "Post",
           associations: [:comments],
           call_stack: ["some/other/path.rb:1"]
+        )
+
+        expect(detection.fixable?).to be false
+      end
+    end
+
+    context "when associations are empty" do
+      it "returns false" do
+        detection = described_class.new(
+          type: :n_plus_one,
+          base_class: "Post",
+          associations: nil,
+          call_stack: ["app/controllers/posts_controller.rb:15:in `index'"]
         )
 
         expect(detection.fixable?).to be false

@@ -7,8 +7,6 @@ module Bullematic
       #: () -> void
       def setup
         return unless defined?(Bullet)
-
-        setup_notification_hook
       end
 
       #: () -> void
@@ -65,10 +63,6 @@ module Bullematic
       private
 
       #: () -> void
-      def setup_notification_hook
-        Bullet::Notification::NPlusOneQuery.prepend(NotificationHook)
-      end
-
       # @rbs notification: untyped
       # @rbs return: void
       def process_n_plus_one(notification)
@@ -143,40 +137,5 @@ module Bullematic
       end
     end
 
-    module NotificationHook
-      # @rbs base_class: untyped
-      # @rbs associations: untyped
-      # @rbs path: untyped
-      # @rbs return: void
-      def initialize(base_class, associations, path = nil)
-        super
-        return unless Bullematic.enabled?
-
-        detection = Detection.new(
-          type: :n_plus_one,
-          base_class: base_class,
-          associations: associations,
-          call_stack: caller
-        )
-
-        config = Bullematic.configuration
-        if config&.logger && config.debug
-          config.logger.debug "[Bullematic] N+1 Detection created (via hook):"
-          config.logger.debug "  Base class: #{base_class}"
-          config.logger.debug "  Associations: #{associations.inspect}"
-          config.logger.debug "  Source file: #{detection.source_file}"
-          config.logger.debug "  Line number: #{detection.line_number}"
-          config.logger.debug "  Fixable: #{detection.fixable?}"
-          config.logger.debug "  Queue size before: #{Fixer.detection_queue.size}"
-        end
-
-        if detection.fixable?
-          Fixer.queue(detection)
-          if config&.logger && config.debug
-            config.logger.debug "  Queue size after: #{Fixer.detection_queue.size}"
-          end
-        end
-      end
-    end
   end
 end

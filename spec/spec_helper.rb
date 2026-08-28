@@ -73,15 +73,4 @@ RSpec.configure do |config|
     end
   end
 
-  config.before(:each) do
-    if defined?(Bullet) && !Bullet.enable?
-      Bullet.enable = true
-    end
-    Bullet.start_request if Bullet.enable?
-    Bullematic::Fixer.clear if defined?(Bullematic::Fixer)
-  end
-
-  config.after(:each) do
-    Bullet.end_request if Bullet.enable?
-  end
 end

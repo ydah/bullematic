@@ -7,6 +7,8 @@ module Bullematic
       class << self
         #: () -> void
         def setup
+          Bullematic::Fixer.clear
+
           ::Minitest.after_run do
             Bullematic::Fixer.apply_fixes if Bullematic.configuration&.enabled && Bullematic.configuration&.auto_fix
           end
@@ -20,16 +22,21 @@ module Bullematic
           return unless Bullematic.enabled?
 
           Bullet.start_request if defined?(Bullet) && Bullet.enable?
-          Bullematic::Fixer.clear
         end
 
         #: () -> void
         def teardown
-          if Bullematic.enabled? && defined?(Bullet) && Bullet.enable?
-            Bullematic::Notifier.process_notifications if Bullet.notification?
-            Bullet.end_request
+          begin
+            if Bullematic.enabled? && defined?(Bullet) && Bullet.enable?
+              begin
+                Bullematic::Notifier.process_notifications if Bullet.notification?
+              ensure
+                Bullet.end_request
+              end
+            end
+          ensure
+            super
           end
-          super
         end
       end
     end

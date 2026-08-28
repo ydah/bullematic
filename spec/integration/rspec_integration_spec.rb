@@ -54,13 +54,19 @@ RSpec.describe "RSpec Integration", type: :integration do
       expect(Bullet.notification?).to be true
     end
 
-    it "clears detections per example" do
-      Bullematic::Fixer.clear
-
+    it "retains detections until the suite applies fixes" do
       user = create(:user)
       create(:post, user: user)
 
-      expect(Bullematic::Fixer.detection_queue).to be_empty
+      detection = Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:comments],
+        call_stack: ["app/controllers/posts_controller.rb:2:in `index'"]
+      )
+      Bullematic::Fixer.queue(detection)
+
+      expect(Bullematic::Fixer.detection_queue).to include(detection)
     end
   end
 end
