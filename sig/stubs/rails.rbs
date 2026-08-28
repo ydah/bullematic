@@ -32,6 +32,13 @@ module Rails
   end
 end
 
+module Rack
+  class BodyProxy
+    def initialize: (untyped) { () -> void } -> void
+    def close: () -> void
+  end
+end
+
 module ActiveSupport
   class StringInquirer < String
     def development?: () -> bool
@@ -67,6 +74,7 @@ module Bullet
 end
 
 class Prism::CallNode
+  def block: () -> untyped
   def receiver: () -> untyped
   def name: () -> Symbol
   def arguments: () -> untyped
@@ -85,7 +93,24 @@ class Prism::ConstantPathNode
 end
 
 class Prism::InstanceVariableWriteNode
+  def name: () -> Symbol
   def value: () -> untyped
+  def location: () -> untyped
+end
+
+class Prism::LocalVariableWriteNode
+  def name: () -> Symbol
+  def value: () -> untyped
+  def location: () -> untyped
+end
+
+class Prism::InstanceVariableReadNode
+  def name: () -> Symbol
+  def location: () -> untyped
+end
+
+class Prism::LocalVariableReadNode
+  def name: () -> Symbol
   def location: () -> untyped
 end
 

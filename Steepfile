@@ -7,6 +7,7 @@ target :lib do
   signature "sig/stubs"
   library "digest"
   library "tempfile"
+  library "tmpdir"
 
   check "lib"
 

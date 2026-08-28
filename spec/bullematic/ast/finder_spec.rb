@@ -107,4 +107,46 @@ RSpec.describe Bullematic::AST::Finder do
       expect(finder.find_query_at_line(1)).to be_nil
     end
   end
+
+  describe "#find_model_queries_for_variables_at_line" do
+    it "links the accessed variable to its model query" do
+      source = <<~RUBY
+        def index
+          @featured = Post.where(featured: true)
+          @posts = Post.all
+          @posts.each { |post| post.comments.to_a }
+        end
+      RUBY
+      finder = described_class.new(Prism.parse(source))
+
+      queries = finder.find_model_queries_for_variables_at_line("Post", 4)
+
+      expect(queries.size).to eq(1)
+      expect(queries.first.target_name).to eq(:@posts)
+    end
+
+    it "supports local relation variables" do
+      source = "posts = Post.all\nposts.each { |post| post.comments.to_a }"
+      finder = described_class.new(Prism.parse(source))
+
+      queries = finder.find_model_queries_for_variables_at_line("Post", 2)
+
+      expect(queries.size).to eq(1)
+      expect(queries.first.target_name).to eq(:posts)
+    end
+
+    it "traces a block parameter back to its relation variable" do
+      source = <<~RUBY
+        @posts = Post.all
+        @posts.each do |post|
+          post.comments.to_a
+        end
+      RUBY
+      finder = described_class.new(Prism.parse(source))
+
+      queries = finder.find_model_queries_for_variables_at_line("Post", 3)
+
+      expect(queries.map(&:target_name)).to eq([:@posts])
+    end
+  end
 end

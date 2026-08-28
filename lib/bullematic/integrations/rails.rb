@@ -1,6 +1,8 @@
 # rbs_inline: enabled
 # frozen_string_literal: true
 
+require "rack/body_proxy"
+
 module Bullematic
   module Integrations
     class Railtie < ::Rails::Railtie
@@ -28,9 +30,19 @@ module Bullematic
     def call(env)
       return @app.call(env) unless Bullematic.enabled?
 
-      @app.call(env)
-    ensure
-      if Bullematic.enabled? && defined?(Bullet) && Bullet.notification?
+      status, headers, body = @app.call(env)
+      [status, headers, Rack::BodyProxy.new(body) { capture_notifications(env) }]
+    rescue StandardError
+      capture_notifications(env)
+      raise
+    end
+
+    private
+
+    # @rbs env: Hash[String, untyped]
+    # @rbs return: void
+    def capture_notifications(env)
+      if Bullematic.enabled? && defined?(Bullet)
         Bullematic::Notifier.process_notifications(context_id: env.object_id)
       end
     end

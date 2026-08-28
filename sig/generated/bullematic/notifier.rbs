@@ -5,14 +5,22 @@ module Bullematic
     # : () -> void
     def self.setup: () -> void
 
+    # : () -> bool
+    def self.compatible?: () -> bool
+
     # @rbs context_id: untyped
     # @rbs return: void
     def self.process_notifications: (?context_id: untyped) -> void
 
     # @rbs notification: untyped
-    # @rbs context_id: Integer
+    # @rbs context_id: untyped
+    # @rbs return: Symbol?
+    private def self.process_notification: (untyped notification, untyped context_id) -> Symbol?
+
+    # @rbs notification: untyped
+    # @rbs context_id: untyped
     # @rbs return: void
-    private def self.process_n_plus_one: (untyped notification, Integer context_id) -> void
+    private def self.process_n_plus_one: (untyped notification, untyped context_id) -> void
 
     # @rbs notification: untyped
     # @rbs return: void

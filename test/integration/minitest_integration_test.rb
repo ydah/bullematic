@@ -48,4 +48,22 @@ class MinitestIntegrationTest < ActionDispatch::IntegrationTest
       assert_equal "Post.includes(:comments).all", File.read(file.path)
     end
   end
+
+  test "setup preserves detections collected earlier in the run" do
+    detection = Bullematic::Detection.new(
+      type: :n_plus_one,
+      base_class: "Post",
+      associations: [:comments],
+      call_stack: []
+    )
+    Bullematic::Fixer.queue(detection)
+    base = Class.new { def setup; end }
+    test_case = Class.new(base) { include Bullematic::Integrations::Minitest::TestHelper }.new
+
+    test_case.setup
+
+    assert_includes Bullematic::Fixer.detection_queue, detection
+  ensure
+    Bullet.end_request if Bullet.start?
+  end
 end

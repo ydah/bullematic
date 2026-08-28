@@ -91,5 +91,98 @@ RSpec.describe Bullematic::Fixer do
         expect(File.binread(file.path)).to eq("User.all")
       end
     end
+
+    it "allows only one writer for the same source snapshot" do
+      Tempfile.create(["fixer", ".rb"]) do |file|
+        file.write("Post.all")
+        file.flush
+        digest = Digest::SHA256.digest("Post.all")
+        errors = Queue.new
+        writers = ["Post.includes(:comments).all", "Post.includes(:author).all"].map do |source|
+          Thread.new do
+            described_class.send(:atomic_write, file.path, source, digest)
+          rescue Bullematic::FixError => error
+            errors << error
+          end
+        end
+
+        writers.each(&:join)
+
+        expect(errors.size).to eq(1)
+        expect(["Post.includes(:comments).all", "Post.includes(:author).all"]).to include(File.binread(file.path))
+      end
+    end
+
+    it "refuses to replace a symlink" do
+      Dir.mktmpdir do |directory|
+        target = File.join(directory, "target.rb")
+        link = File.join(directory, "link.rb")
+        File.write(target, "Post.all")
+        File.symlink(target, link)
+
+        expect do
+          described_class.send(
+            :atomic_write,
+            link,
+            "Post.includes(:comments).all",
+            Digest::SHA256.digest("Post.all")
+          )
+        end.to raise_error(Bullematic::FixError, /symlink/)
+        expect(File.read(target)).to eq("Post.all")
+      end
+    end
+  end
+
+  describe "query evidence" do
+    it "rejects associations that reflection cannot verify" do
+      valid = Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:comments],
+        call_stack: []
+      )
+      invalid = Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:missing],
+        call_stack: []
+      )
+
+      expect(described_class.send(:valid_associations?, valid)).to be true
+      expect(described_class.send(:valid_associations?, invalid)).to be false
+    end
+
+    it "does not use a file-wide model match without a source location" do
+      finder = Bullematic::AST::Finder.new(Prism.parse("Post.all\nputs :done"))
+      detection = Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:comments],
+        call_stack: []
+      )
+
+      expect(described_class.send(:find_query_location, finder, detection)).to be_nil
+    end
+
+    it "selects the query assigned to the variable used at the access site" do
+      source = <<~RUBY
+        def index
+          @featured = Post.where(featured: true)
+          @posts = Post.all
+          @posts.each { |post| post.comments.to_a }
+        end
+      RUBY
+      finder = Bullematic::AST::Finder.new(Prism.parse(source))
+      detection = Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:comments],
+        call_stack: ["app/controllers/posts_controller.rb:4:in 'block in PostsController#index'"]
+      )
+
+      query = described_class.send(:find_query_location, finder, detection)
+
+      expect(query.target_name).to eq(:@posts)
+    end
   end
 end

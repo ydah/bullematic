@@ -69,4 +69,22 @@ RSpec.describe "RSpec Integration", type: :integration do
       expect(Bullematic::Fixer.detection_queue).to include(detection)
     end
   end
+
+  describe "suite retention", order: :defined do
+    before(:context) { Bullematic::Fixer.clear }
+    after(:context) { Bullematic::Fixer.clear }
+
+    it "queues a detection in one example" do
+      Bullematic::Fixer.queue(Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:comments],
+        call_stack: ["app/controllers/posts_controller.rb:2:in `index'"]
+      ))
+    end
+
+    it "still has the prior example detection" do
+      expect(Bullematic::Fixer.detection_queue.map(&:model_class_name)).to include("Post")
+    end
+  end
 end

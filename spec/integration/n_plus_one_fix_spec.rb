@@ -17,6 +17,17 @@ RSpec.describe "N+1 Auto Fix Integration", type: :integration do
     Object.send(:remove_const, :PostsController) if defined?(PostsController)
   end
 
+  def expect_fixed_query_to_be_clean(test_file)
+    Bullet.end_request if Bullet.start?
+    Bullet.start_request
+    Object.send(:remove_const, :PostsController) if defined?(PostsController)
+    load test_file
+    PostsController.new.index
+    expect(Bullet.notification?).to be false
+  ensure
+    Bullet.end_request if Bullet.start?
+  end
+
   around do |example|
     original = ENV.fetch("BULLEMATIC", nil)
     ENV["BULLEMATIC"] = "1"
@@ -71,6 +82,7 @@ RSpec.describe "N+1 Auto Fix Integration", type: :integration do
 
       fixed_content = File.read(test_file)
       expect(fixed_content).to include(".includes(:comments)")
+      expect_fixed_query_to_be_clean(test_file)
     end
 
     it "logs detection queue changes when debug is enabled" do
@@ -190,6 +202,7 @@ RSpec.describe "N+1 Auto Fix Integration", type: :integration do
       fixed_content = File.read(test_file)
       expected = File.read(File.join(fixture_dir, "..", "expected", "nested_associations_fixed.rb"))
       expect(fixed_content).to eq(expected)
+      expect_fixed_query_to_be_clean(test_file)
     end
   end
 

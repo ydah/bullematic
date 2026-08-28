@@ -9,9 +9,9 @@ module Bullematic
       QUERY_METHODS = %i[all where find find_by first last order limit offset].freeze #: Array[Symbol]
 
       # @rbs!
-      #   type query_location = { node: untyped, location: untyped, receiver: untyped, method_name: Symbol }
+      #   type query_location = { node: untyped, location: untyped, receiver: untyped, method_name: Symbol, target_name: Symbol? }
 
-      QueryLocation = Struct.new(:node, :location, :receiver, :method_name, keyword_init: true)
+      QueryLocation = Struct.new(:node, :location, :receiver, :method_name, :target_name, keyword_init: true)
 
       # @rbs @parse_result: untyped
 
@@ -42,21 +42,15 @@ module Bullematic
         queries.one? ? queries.first : nil
       end
 
-      # @rbs line_number: Integer
-      # @rbs return: String?
-      def find_method_name_at_line(line_number)
-        find_method_for_line(parse_result.value, line_number)
-      end
-
       # @rbs model_class_name: String
-      # @rbs method_name: String?
+      # @rbs line_number: Integer
       # @rbs return: Array[QueryLocation]
-      def find_model_queries_in_method(model_class_name, method_name)
-        return [] unless method_name
-
-        queries = [] #: Array[QueryLocation]
-        visit_method_node(parse_result.value, queries, model_class_name, method_name)
-        queries
+      def find_model_queries_for_variables_at_line(model_class_name, line_number)
+        names = variable_names_at_line(parse_result.value, line_number)
+        add_block_receiver_names(parse_result.value, line_number, names)
+        find_model_queries(model_class_name).select do |query|
+          query.target_name && names.include?(query.target_name)
+        end
       end
 
       private
@@ -72,7 +66,7 @@ module Bullematic
         return if skip_nodes.include?(node.object_id)
 
         case node
-        when Prism::InstanceVariableWriteNode
+        when Prism::InstanceVariableWriteNode, Prism::LocalVariableWriteNode
           if check_assignment_node(node, queries, model_class_name, target_line)
             mark_descendant_calls(node.value, skip_nodes)
           end
@@ -161,47 +155,46 @@ module Bullematic
           node: value,
           location: value.location,
           receiver: root_receiver,
-          method_name: value.name
+          method_name: value.name,
+          target_name: node.name
         )
         true
       end
 
       # @rbs node: untyped
-      # @rbs queries: Array[QueryLocation]
-      # @rbs model_class_name: String
-      # @rbs method_name: String
-      # @rbs return: void
-      def visit_method_node(node, queries, model_class_name, method_name)
-        return unless node.respond_to?(:child_nodes)
+      # @rbs line_number: Integer
+      # @rbs return: Array[Symbol]
+      def variable_names_at_line(node, line_number)
+        return [] unless node.respond_to?(:child_nodes)
 
-        if node.is_a?(Prism::DefNode) && node.name.to_s == method_name
-          visit_node(node.body, queries, model_class_name, nil) if node.body
-          return
+        names = [] #: Array[Symbol]
+        if (node.is_a?(Prism::InstanceVariableReadNode) || node.is_a?(Prism::LocalVariableReadNode)) &&
+           node.location.start_line == line_number
+          names << node.name
         end
-
-        node.child_nodes.compact.each do |child|
-          visit_method_node(child, queries, model_class_name, method_name)
-        end
+        node.child_nodes.compact.each { |child| names.concat(variable_names_at_line(child, line_number)) }
+        names.uniq
       end
 
       # @rbs node: untyped
       # @rbs line_number: Integer
-      # @rbs return: String?
-      def find_method_for_line(node, line_number)
-        return nil unless node.respond_to?(:child_nodes)
+      # @rbs names: Array[Symbol]
+      # @rbs return: void
+      def add_block_receiver_names(node, line_number, names)
+        return unless node.respond_to?(:child_nodes)
 
-        if node.is_a?(Prism::DefNode)
-          start_line = node.location.start_line
-          end_line = node.location.end_line
-          return node.name.to_s if line_number >= start_line && line_number <= end_line
+        if node.is_a?(Prism::CallNode) && node.block &&
+           line_number.between?(node.block.location.start_line, node.block.location.end_line)
+          parameters = node.block.parameters&.parameters&.requireds || []
+          receiver = node.receiver
+          if parameters.any? { |parameter| names.include?(parameter.name) } &&
+             (receiver.is_a?(Prism::InstanceVariableReadNode) || receiver.is_a?(Prism::LocalVariableReadNode))
+            names << receiver.name
+          end
         end
 
-        node.child_nodes.compact.each do |child|
-          found = find_method_for_line(child, line_number)
-          return found if found
-        end
-
-        nil
+        node.child_nodes.compact.each { |child| add_block_receiver_names(child, line_number, names) }
+        names.uniq!
       end
 
       # @rbs node: untyped

@@ -43,6 +43,10 @@ module Bullematic
     private def self.build_requests: (AST::Finder finder, Array[Detection] detections, BullematicLogger logger, String filepath) -> Array[Hash[Symbol, untyped]]
 
     # @rbs detection: Detection
+    # @rbs return: bool
+    private def self.valid_associations?: (Detection detection) -> bool
+
+    # @rbs detection: Detection
     # @rbs candidates: Array[Detection]
     # @rbs consumed: Array[Detection]
     # @rbs seen: Array[String]

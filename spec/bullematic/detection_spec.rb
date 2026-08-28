@@ -142,5 +142,16 @@ RSpec.describe Bullematic::Detection do
       expect(detection.line_number).to eq(15)
       expect(detection.method_name).to eq("index")
     end
+
+    it "accepts modern single-quoted backtrace frames" do
+      detection = described_class.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:comments],
+        call_stack: ["app/controllers/posts_controller.rb:15:in 'index'"]
+      )
+
+      expect(detection.method_name).to eq("index")
+    end
   end
 end

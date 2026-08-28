@@ -5,7 +5,7 @@ module Bullematic
     class Finder
       QUERY_METHODS: Array[Symbol]
 
-      type query_location = { node: untyped, location: untyped, receiver: untyped, method_name: Symbol }
+      type query_location = { node: untyped, location: untyped, receiver: untyped, method_name: Symbol, target_name: Symbol? }
 
       class QueryLocation < Struct[untyped]
         attr_accessor node(): untyped
@@ -16,8 +16,10 @@ module Bullematic
 
         attr_accessor method_name(): untyped
 
-        def self.new: (?node: untyped, ?location: untyped, ?receiver: untyped, ?method_name: untyped) -> instance
-                    | ({ ?node: untyped, ?location: untyped, ?receiver: untyped, ?method_name: untyped }) -> instance
+        attr_accessor target_name(): untyped
+
+        def self.new: (?node: untyped, ?location: untyped, ?receiver: untyped, ?method_name: untyped, ?target_name: untyped) -> instance
+                    | ({ ?node: untyped, ?location: untyped, ?receiver: untyped, ?method_name: untyped, ?target_name: untyped }) -> instance
       end
 
       @parse_result: untyped
@@ -39,14 +41,10 @@ module Bullematic
       # @rbs return: QueryLocation?
       def find_query_at_line: (Integer line_number) -> QueryLocation?
 
-      # @rbs line_number: Integer
-      # @rbs return: String?
-      def find_method_name_at_line: (Integer line_number) -> String?
-
       # @rbs model_class_name: String
-      # @rbs method_name: String?
+      # @rbs line_number: Integer
       # @rbs return: Array[QueryLocation]
-      def find_model_queries_in_method: (String model_class_name, String? method_name) -> Array[QueryLocation]
+      def find_model_queries_for_variables_at_line: (String model_class_name, Integer line_number) -> Array[QueryLocation]
 
       private
 
@@ -84,16 +82,15 @@ module Bullematic
       def check_assignment_node: (untyped node, Array[QueryLocation] queries, String model_class_name, Integer? target_line) -> bool
 
       # @rbs node: untyped
-      # @rbs queries: Array[QueryLocation]
-      # @rbs model_class_name: String
-      # @rbs method_name: String
-      # @rbs return: void
-      def visit_method_node: (untyped node, Array[QueryLocation] queries, String model_class_name, String method_name) -> void
+      # @rbs line_number: Integer
+      # @rbs return: Array[Symbol]
+      def variable_names_at_line: (untyped node, Integer line_number) -> Array[Symbol]
 
       # @rbs node: untyped
       # @rbs line_number: Integer
-      # @rbs return: String?
-      def find_method_for_line: (untyped node, Integer line_number) -> String?
+      # @rbs names: Array[Symbol]
+      # @rbs return: void
+      def add_block_receiver_names: (untyped node, Integer line_number, Array[Symbol] names) -> void
 
       # @rbs node: untyped
       # @rbs return: untyped

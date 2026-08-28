@@ -49,6 +49,19 @@ RSpec.describe Bullematic::AST::Rewriter do
       expect(rewriter.rewrite).to eq("# 投稿一覧\n@posts = Post.includes(:comments).all")
     end
 
+    it "preserves legacy encodings and CRLF line endings" do
+      [Encoding::Windows_31J, Encoding::EUC_JP].each do |encoding|
+        source = "# 投稿一覧\r\nPost.all\r\n".encode(encoding)
+        rewriter = described_class.new(source)
+
+        rewriter.add_includes(find_query(source, "Post"), [:comments])
+        output = rewriter.rewrite
+
+        expect(output.encoding).to eq(encoding)
+        expect(output.encode("UTF-8")).to include("Post.includes(:comments).all\r\n")
+      end
+    end
+
     it "preserves complex existing includes arguments" do
       source = "Post.includes(comments: :author, *DEFAULTS).all"
       rewriter = described_class.new(source)

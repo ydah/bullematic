@@ -4,6 +4,7 @@
 require "digest"
 require "fileutils"
 require "tempfile"
+require "tmpdir"
 
 module Bullematic
   class Fixer
@@ -113,29 +114,25 @@ module Bullematic
       # @rbs detection: Detection
       # @rbs return: AST::Finder::QueryLocation?
       def find_query_location(finder, detection)
-        queries = finder.find_model_queries(
-          detection.model_class_name,
-          line_number: detection.line_number
-        )
+        queries = if detection.line_number
+                    finder.find_model_queries(
+                      detection.model_class_name,
+                      line_number: detection.line_number
+                    )
+                  else
+                    []
+                  end
 
         return queries.first if queries.size == 1
         return nil if queries.size > 1
 
-        method_name = detection.method_name
-        if method_name.nil? && detection.line_number
-          method_name = finder.find_method_name_at_line(detection.line_number)
-        end
-        if method_name&.include?(" in ")
-          method_name = method_name.split(" in ").last
-        end
-        method_name = method_name&.sub(/\Ablock /, "")
-        method_queries = finder.find_model_queries_in_method(detection.model_class_name, method_name)
-        return method_queries.first if method_queries.size == 1
+        return nil unless detection.line_number
 
-        fallback_queries = finder.find_model_queries(detection.model_class_name)
-        return fallback_queries.first if fallback_queries.size == 1
-
-        nil
+        variable_queries = finder.find_model_queries_for_variables_at_line(
+          detection.model_class_name,
+          detection.line_number
+        )
+        variable_queries.one? ? variable_queries.first : nil
       end
 
       # @rbs finder: AST::Finder
@@ -148,6 +145,11 @@ module Bullematic
         unresolved = [] #: Array[Detection]
 
         detections.each do |detection|
+          unless valid_associations?(detection)
+            logger.log_skip(filepath, detection, "invalid association")
+            next
+          end
+
           location = find_query_location(finder, detection)
           if location
             requests << { detection: detection, location: location, associations: detection.associations }
@@ -162,6 +164,20 @@ module Bullematic
         end
         (unresolved - consumed).each { |detection| logger.log_skip(filepath, detection, "could not locate query") }
         requests
+      end
+
+      # @rbs detection: Detection
+      # @rbs return: bool
+      def valid_associations?(detection)
+        model = constantize_model(detection.model_class_name)
+        return false unless model&.respond_to?(:reflect_on_association)
+
+        detection.associations.all? do |association|
+          reflection = model.reflect_on_association(association)
+          reflection && !reflection.polymorphic?
+        end
+      rescue NameError
+        false
       end
 
       # @rbs detection: Detection
@@ -208,7 +224,7 @@ module Bullematic
       # @rbs detection: Detection
       # @rbs return: String?
       def normalized_method(detection)
-        detection.method_name&.split(" in ")&.last&.sub(/\Ablock /, "")
+        detection.method_name&.split(" in ")&.last&.sub(/\Ablock /, "")&.split("#")&.last
       end
 
       # @rbs left: Detection
@@ -236,12 +252,16 @@ module Bullematic
       # @rbs expected_digest: String
       # @rbs return: void
       def atomic_write(filepath, source, expected_digest)
-        File.open(filepath, File::RDONLY) do |file|
-          file.flock(File::LOCK_EX)
-          raise FixError, "source changed while planning fix" unless Digest::SHA256.digest(file.read) == expected_digest
+        raise FixError, "symlink sources are unsupported" if File.symlink?(filepath)
+
+        lock_name = "bullematic-#{Digest::SHA256.hexdigest(File.expand_path(filepath))}.lock"
+        File.open(File.join(Dir.tmpdir, lock_name), File::RDWR | File::CREAT, 0o600) do |lock|
+          lock.flock(File::LOCK_EX)
+          current_source = File.binread(filepath)
+          raise FixError, "source changed while planning fix" unless Digest::SHA256.digest(current_source) == expected_digest
 
           backup_file(filepath) if Bullematic.configuration&.backup
-          mode = file.stat.mode
+          mode = File.stat(filepath).mode
           Tempfile.create([".bullematic", ".tmp"], File.dirname(filepath)) do |tempfile|
             tempfile.binmode
             tempfile.write(source)
@@ -250,6 +270,7 @@ module Bullematic
             File.chmod(mode, tempfile.path)
             File.rename(tempfile.path, filepath)
           end
+          File.open(File.dirname(filepath), File::RDONLY, &:fsync)
         end
       end
 

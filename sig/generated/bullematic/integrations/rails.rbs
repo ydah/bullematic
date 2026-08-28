@@ -16,5 +16,11 @@ module Bullematic
     # @rbs env: Hash[String, untyped]
     # @rbs return: untyped
     def call: (Hash[String, untyped] env) -> untyped
+
+    private
+
+    # @rbs env: Hash[String, untyped]
+    # @rbs return: void
+    def capture_notifications: (Hash[String, untyped] env) -> void
   end
 end

@@ -81,7 +81,7 @@ module Bullematic
       @call_stack.each do |raw_frame|
         frame = raw_frame.to_s
 
-        match = frame.match(/\A(.+):(\d+)(?::in `(.+)')?/)
+        match = frame.match(/\A(.+):(\d+)(?::in [`'](.+)')?\z/)
         next unless match
 
         filepath = match[1]

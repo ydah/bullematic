@@ -38,20 +38,4 @@ RSpec.describe "Rails Integration", type: :request do
       expect(response).to have_http_status(:ok)
     end
   end
-
-  describe "middleware integration" do
-    before do
-      Bullematic.configure do |config|
-        config.enabled = true
-      end
-    end
-
-    it "exposes middleware in the stack" do
-      middleware_classes = Rails.application.middleware.map(&:klass)
-
-      if Bullematic.configuration&.enabled
-        # expect(middleware_classes).to include(Bullematic::Middleware)
-      end
-    end
-  end
 end
