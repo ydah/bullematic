@@ -19,19 +19,26 @@ module Bullematic
         #: () -> void
         def setup
           super
+          @bullematic_request_started = false
           return unless Bullematic.enabled?
 
-          Bullet.start_request if defined?(Bullet) && Bullet.enable?
+          if defined?(Bullet) && Bullet.enable?
+            Bullet.start_request
+            @bullematic_request_started = true
+          end
         end
 
         #: () -> void
         def teardown
           begin
-            if Bullematic.enabled? && defined?(Bullet) && Bullet.enable?
+            if @bullematic_request_started
               begin
-                Bullematic::Notifier.process_notifications(context_id: object_id)
+                if Bullematic.enabled? && Bullet.enable?
+                  Bullematic::Notifier.process_notifications(context_id: object_id)
+                end
               ensure
                 Bullet.end_request
+                @bullematic_request_started = false
               end
             end
           ensure

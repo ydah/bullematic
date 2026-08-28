@@ -87,4 +87,20 @@ RSpec.describe "RSpec Integration", type: :integration do
       expect(Bullematic::Fixer.detection_queue.map(&:model_class_name)).to include("Post")
     end
   end
+
+  describe "disabled teardown" do
+    before(:context) { Bullematic.configure { |config| config.enabled = true } }
+    after(:context) do
+      Bullet.enable = true
+      Bullematic.configure { |config| config.enabled = true }
+      Bullet.end_request if Bullet.start?
+    end
+
+    it "disables Bullematic while a request is active" do
+      expect(Bullet.start?).to be true
+      expect(Bullet).to receive(:end_request).and_call_original
+      Bullematic.configuration.enabled = false
+      Bullet.enable = false
+    end
+  end
 end

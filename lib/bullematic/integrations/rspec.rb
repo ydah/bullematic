@@ -12,16 +12,22 @@ module Bullematic
               Bullematic::Fixer.clear
             end
 
-            config.before(:each) do
+            config.before(:each) do |example|
+              example.metadata[:bullematic_request_started] = false
               if Bullematic.enabled?
-                Bullet.start_request if defined?(Bullet) && Bullet.enable?
+                if defined?(Bullet) && Bullet.enable?
+                  Bullet.start_request
+                  example.metadata[:bullematic_request_started] = true
+                end
               end
             end
 
             config.after(:each) do |example|
-              if Bullematic.enabled? && defined?(Bullet) && Bullet.enable?
+              if example.metadata.delete(:bullematic_request_started)
                 begin
-                  Bullematic::Notifier.process_notifications(context_id: example.id)
+                  if Bullematic.enabled? && Bullet.enable?
+                    Bullematic::Notifier.process_notifications(context_id: example.id)
+                  end
                 ensure
                   Bullet.end_request
                 end

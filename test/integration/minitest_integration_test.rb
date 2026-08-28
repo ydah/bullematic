@@ -66,4 +66,27 @@ class MinitestIntegrationTest < ActionDispatch::IntegrationTest
   ensure
     Bullet.end_request if Bullet.start?
   end
+
+  test "teardown ends a request after Bullematic is disabled" do
+    Bullet.end_request if Bullet.start?
+    Bullet.enable = true
+    Bullematic.configure { |config| config.enabled = true }
+    base = Class.new do
+      def setup; end
+      def teardown; end
+    end
+    test_case = Class.new(base) { include Bullematic::Integrations::Minitest::TestHelper }.new
+    test_case.setup
+    Bullematic.configuration.enabled = false
+    Bullet.enable = false
+
+    test_case.teardown
+
+    Bullet.enable = true
+    refute Bullet.start?
+  ensure
+    Bullet.enable = true
+    Bullematic.configure { |config| config.enabled = true }
+    Bullet.end_request if Bullet.start?
+  end
 end
