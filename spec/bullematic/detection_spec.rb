@@ -153,5 +153,18 @@ RSpec.describe Bullematic::Detection do
 
       expect(detection.method_name).to eq("index")
     end
+
+    it "parses Windows drive-letter backtrace frames" do
+      Bullematic.configuration.target_paths = ["C:/project/app"]
+      detection = described_class.new(
+        type: :n_plus_one,
+        base_class: "Post",
+        associations: [:comments],
+        call_stack: ["C:/project/app/controllers/posts_controller.rb:15:in 'index'"]
+      )
+
+      expect(detection.source_file).to eq("C:/project/app/controllers/posts_controller.rb")
+      expect(detection.line_number).to eq(15)
+    end
   end
 end

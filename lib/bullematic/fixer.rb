@@ -283,7 +283,11 @@ module Bullematic
             File.chmod(mode, tempfile.path)
             File.rename(tempfile.path, filepath)
           end
-          File.open(File.dirname(filepath), File::RDONLY, &:fsync)
+          begin
+            File.open(File.dirname(filepath), File::RDONLY, &:fsync)
+          rescue Errno::EACCES, Errno::EINVAL, Errno::EISDIR
+            # Directory fsync is unavailable on some filesystems and Windows.
+          end
         end
       end
 
