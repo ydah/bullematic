@@ -32,12 +32,11 @@ module Bullematic
         queue_mutex.synchronize { @detection_queue = [] }
       end
 
-      #: () -> void
+      #: () -> Hash[Symbol, Integer]
       def apply_fixes
-        pending = drain_queue
-        return if pending.empty?
-
         logger = BullematicLogger.new
+        pending = drain_queue
+        return logger.stats if pending.empty?
 
         grouped = pending.group_by(&:source_file)
 
@@ -53,6 +52,7 @@ module Bullematic
         end
 
         logger.log_summary
+        logger.stats
       end
 
       private

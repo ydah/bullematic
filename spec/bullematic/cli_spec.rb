@@ -69,4 +69,23 @@ RSpec.describe Bullematic::CLI do
   it "reports the installed dependency contract" do
     expect(described_class.run(["doctor"])).to eq(0)
   end
+
+  it "fails when recorded evidence cannot produce a safe fix" do
+    Dir.mktmpdir do |directory|
+      source = File.join(directory, "posts.rb")
+      evidence = File.join(directory, "evidence.jsonl")
+      File.write(source, "Post.all\n")
+      ENV[Bullematic::EvidenceStore::ENV_KEY] = evidence
+      Bullematic.configure { |config| config.target_paths = [directory] }
+      Bullematic::EvidenceStore.append(Bullematic::Detection.new(
+        type: :n_plus_one,
+        base_class: "MissingPost",
+        associations: [:comments],
+        call_stack: ["#{source}:1:in 'index'"]
+      ))
+
+      expect { expect(described_class.run(["apply"])).to eq(1) }
+        .to output(/no safe fixes were fixed/).to_stderr
+    end
+  end
 end

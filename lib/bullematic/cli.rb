@@ -62,7 +62,11 @@ module Bullematic
         ensure
           ENV[EvidenceStore::ENV_KEY] = record_file if record_file
         end
-        Fixer.apply_fixes
+        stats = Fixer.apply_fixes
+        operation = dry_run ? :planned : :fixed
+        raise Error, "#{stats[:errors]} error(s) while applying fixes" if stats[:errors].positive?
+        raise Error, "no safe fixes were #{operation}" if stats[operation].zero?
+
         0
       end
 

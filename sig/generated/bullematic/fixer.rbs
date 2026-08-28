@@ -12,8 +12,8 @@ module Bullematic
     # : () -> void
     def self.clear: () -> void
 
-    # : () -> void
-    def self.apply_fixes: () -> void
+    # : () -> Hash[Symbol, Integer]
+    def self.apply_fixes: () -> Hash[Symbol, Integer]
 
     # : () -> Array[Detection]
     private def self.queue_store: () -> Array[Detection]
