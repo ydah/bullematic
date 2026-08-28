@@ -32,6 +32,14 @@ RSpec.describe Bullematic::Middleware do
     expect { middleware.call(env) }.to raise_error("boom")
   end
 
+  it "preserves the application error when notification capture fails" do
+    allow(Bullematic::Notifier).to receive(:process_notifications).and_call_original
+    allow(Bullet).to receive(:notification?).and_raise("collector failed")
+    middleware = described_class.new(->(_env) { raise "application failed" })
+
+    expect { middleware.call(env) }.to raise_error("application failed")
+  end
+
   it "does not retain request detections without a recording sink" do
     allow(Bullematic::EvidenceStore).to receive(:recording?).and_return(false)
     described_class.new(->(_env) { [200, {}, ["ok"]] }).call(env)

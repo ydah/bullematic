@@ -26,6 +26,25 @@ RSpec.describe Bullematic::Notifier do
     expect { described_class.process_notifications }.not_to raise_error
   end
 
+  it "fails closed when Bullet's collector raises" do
+    Bullematic.configure
+    allow(Bullet).to receive(:notification?).and_raise("collector failed")
+
+    expect(Bullematic.configuration.logger).to receive(:warn).with(
+      "[Bullematic] Failed to process Bullet notifications: collector failed"
+    )
+    expect { described_class.process_notifications }.not_to raise_error
+  end
+
+  it "fails closed when reporting a collector failure also raises" do
+    logger = instance_double(Logger)
+    Bullematic.configure { |config| config.logger = logger }
+    allow(Bullet).to receive(:notification?).and_raise("collector failed")
+    allow(logger).to receive(:warn).and_raise("logger failed")
+
+    expect { described_class.process_notifications }.not_to raise_error
+  end
+
   it "captures the notification fields without shifting arguments" do
     Dir.mktmpdir do |directory|
       filepath = File.join(directory, "posts.rb")

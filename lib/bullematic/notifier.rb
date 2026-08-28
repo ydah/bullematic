@@ -70,6 +70,14 @@ module Bullematic
           config.logger.debug "[Bullematic] Processed #{unused_eager_loading_count} UnusedEagerLoading notifications"
           config.logger.debug "[Bullematic] Detection queue size: #{Fixer.detection_queue.size}"
         end
+      rescue StandardError => error
+        begin
+          Bullematic.configuration&.logger&.warn(
+            "[Bullematic] Failed to process Bullet notifications: #{error.message}"
+          )
+        rescue StandardError
+          nil
+        end
       end
 
       private
