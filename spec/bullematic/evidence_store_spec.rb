@@ -10,6 +10,7 @@ RSpec.describe Bullematic::EvidenceStore do
 
   it "persists concurrent detections as valid JSON lines without retaining them in memory" do
     Dir.mktmpdir do |directory|
+      queued_before = Bullematic::Fixer.detection_queue
       source = File.join(directory, "posts.rb")
       evidence = File.join(directory, "evidence.jsonl")
       File.write(source, "Post.all")
@@ -30,7 +31,7 @@ RSpec.describe Bullematic::EvidenceStore do
       threads.each(&:join)
 
       expect(described_class.read(evidence).size).to eq(10)
-      expect(Bullematic::Fixer.detection_queue).to be_empty
+      expect(Bullematic::Fixer.detection_queue).to eq(queued_before)
     end
   end
 
