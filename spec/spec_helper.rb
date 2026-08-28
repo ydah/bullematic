@@ -69,9 +69,12 @@ RSpec.configure do |config|
   end
 
   config.around(:each) do |example|
+    original_configuration = Bullematic.configuration&.dup
     DatabaseCleaner.cleaning do
       example.run
     end
+  ensure
+    Bullematic.configuration = original_configuration
   end
 
 end
