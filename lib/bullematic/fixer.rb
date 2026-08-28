@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require "digest"
-require "fileutils"
 require "tempfile"
 require "tmpdir"
 
@@ -287,8 +286,8 @@ module Bullematic
           current_source = File.binread(filepath)
           raise FixError, "source changed while planning fix" unless Digest::SHA256.digest(current_source) == expected_digest
 
-          backup_file(filepath) if Bullematic.configuration&.backup
           mode = File.stat(filepath).mode
+          backup_file(filepath, current_source, mode) if Bullematic.configuration&.backup
           Tempfile.create([".bullematic", ".tmp"], File.dirname(filepath)) do |tempfile|
             tempfile.binmode
             tempfile.write(source)
@@ -306,13 +305,31 @@ module Bullematic
       end
 
       # @rbs filepath: String
+      # @rbs source: String
+      # @rbs mode: Integer
       # @rbs return: void
-      def backup_file(filepath)
+      def backup_file(filepath, source, mode)
         backup_path = "#{filepath}.bullematic.bak"
         raise FixError, "symlink backup files are unsupported" if File.symlink?(backup_path)
-        raise FixError, "backup path is not a regular file" if File.exist?(backup_path) && !File.file?(backup_path)
+        if File.exist?(backup_path)
+          raise FixError, "backup path is not a regular file" unless File.file?(backup_path)
 
-        FileUtils.cp(filepath, backup_path) unless File.exist?(backup_path)
+          return
+        end
+
+        flags = File::WRONLY | File::CREAT | File::EXCL
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        begin
+          File.open(backup_path, flags, mode & 0o777) do |backup|
+            backup.binmode
+            backup.write(source)
+            backup.flush
+            backup.fsync
+          end
+        rescue Errno::EEXIST, Errno::ELOOP
+          raise FixError, "symlink backup files are unsupported" if File.symlink?(backup_path)
+          raise FixError, "backup path is not a regular file" unless File.file?(backup_path)
+        end
       end
     end
   end

@@ -90,6 +90,27 @@ RSpec.describe Bullematic::CLI do
     end
   end
 
+  it "refuses a command symlink swapped in after validation" do
+    skip "File::NOFOLLOW is unavailable" unless File.const_defined?(:NOFOLLOW)
+
+    Dir.mktmpdir do |directory|
+      target = File.join(directory, "target")
+      evidence = File.join(directory, "evidence.jsonl")
+      command_path = "#{evidence}.command.json"
+      File.write(target, "keep")
+      allow(File).to receive(:symlink?).and_call_original
+      allow(File).to receive(:symlink?).with(command_path) do
+        File.symlink(target, command_path)
+        false
+      end
+
+      expect do
+        described_class.send(:write_command, evidence, ["true"])
+      end.to raise_error(Bullematic::Error, /symlink/)
+      expect(File.read(target)).to eq("keep")
+    end
+  end
+
   it "refuses to read a command through a symlink" do
     Dir.mktmpdir do |directory|
       evidence = File.join(directory, "evidence.jsonl")

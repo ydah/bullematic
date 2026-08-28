@@ -280,6 +280,39 @@ RSpec.describe Bullematic::Fixer do
       end
     end
 
+    it "refuses a backup symlink swapped in after validation" do
+      Dir.mktmpdir do |directory|
+        source = File.join(directory, "posts.rb")
+        backup = "#{source}.bullematic.bak"
+        outside = File.join(directory, "outside")
+        File.write(source, "Post.all")
+        File.write(outside, "keep")
+        swapped = false
+        allow(File).to receive(:exist?).and_call_original
+        allow(File).to receive(:exist?).with(backup) do
+          if swapped
+            true
+          else
+            File.symlink(outside, backup)
+            swapped = true
+            false
+          end
+        end
+        Bullematic.configuration.backup = true
+
+        expect do
+          described_class.send(
+            :atomic_write,
+            source,
+            "Post.includes(:comments).all",
+            Digest::SHA256.digest("Post.all")
+          )
+        end.to raise_error(Bullematic::FixError, /symlink backup/)
+        expect(File.read(source)).to eq("Post.all")
+        expect(File.read(outside)).to eq("keep")
+      end
+    end
+
     it "refuses to write when the backup path is not a regular file" do
       Dir.mktmpdir do |directory|
         source = File.join(directory, "posts.rb")

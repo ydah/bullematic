@@ -155,7 +155,7 @@ module Bullematic
         path = "#{evidence_path}.command.json"
         raise Error, "symlink command files are unsupported" if File.symlink?(path)
 
-        File.open(path, File::WRONLY | File::CREAT | File::TRUNC, 0o600) do |file|
+        open_command(path, File::WRONLY | File::CREAT | File::TRUNC) do |file|
           file.chmod(0o600)
           file.write(JSON.generate(command))
         end
@@ -168,8 +168,16 @@ module Bullematic
         raise Error, "symlink command files are unsupported" if File.symlink?(path)
         return [] unless File.file?(path)
 
-        value = JSON.parse(File.binread(path))
+        value = open_command(path, File::RDONLY) { |file| JSON.parse(file.read) }
         value.is_a?(Array) && value.all?(String) ? value : []
+      end
+
+      #: (String, Integer) { (File) -> untyped } -> untyped
+      def open_command(path, flags, &block)
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(path, flags, 0o600, &block)
+      rescue Errno::ELOOP
+        raise Error, "symlink command files are unsupported"
       end
 
     end

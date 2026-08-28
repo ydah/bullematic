@@ -49,5 +49,8 @@ module Bullematic
     # @rbs evidence_path: String
     # @rbs return: Array[String]
     private def self.read_command: (String evidence_path) -> Array[String]
+
+    # : (String, Integer) { (File) -> untyped } -> untyped
+    private def self.open_command: (String, Integer) { (File) -> untyped } -> untyped
   end
 end

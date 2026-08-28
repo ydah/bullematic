@@ -71,6 +71,24 @@ RSpec.describe Bullematic::EvidenceStore do
     end
   end
 
+  it "refuses a symlink swapped in after validation" do
+    skip "File::NOFOLLOW is unavailable" unless File.const_defined?(:NOFOLLOW)
+
+    Dir.mktmpdir do |directory|
+      target = File.join(directory, "target")
+      evidence = File.join(directory, "evidence.jsonl")
+      File.write(target, "keep")
+      allow(File).to receive(:symlink?).and_call_original
+      allow(File).to receive(:symlink?).with(evidence) do
+        File.symlink(target, evidence)
+        false
+      end
+
+      expect { described_class.clear(evidence) }.to raise_error(Bullematic::Error, /symlink/)
+      expect(File.read(target)).to eq("keep")
+    end
+  end
+
   it "refuses to read a symlink evidence file" do
     Dir.mktmpdir do |directory|
       target = File.join(directory, "target.jsonl")

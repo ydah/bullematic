@@ -28,5 +28,8 @@ module Bullematic
     # @rbs filepath: String
     # @rbs return: void
     private def self.reject_symlink!: (String filepath) -> void
+
+    # : (String, Integer) { (File) -> untyped } -> untyped
+    private def self.open_evidence: (String, Integer) { (File) -> untyped } -> untyped
   end
 end

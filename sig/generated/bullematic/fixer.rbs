@@ -81,7 +81,9 @@ module Bullematic
     private def self.atomic_write: (String filepath, String source, String expected_digest) -> void
 
     # @rbs filepath: String
+    # @rbs source: String
+    # @rbs mode: Integer
     # @rbs return: void
-    private def self.backup_file: (String filepath) -> void
+    private def self.backup_file: (String filepath, String source, Integer mode) -> void
   end
 end
