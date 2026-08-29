@@ -203,6 +203,7 @@ RSpec.describe Bullematic::Fixer do
       Tempfile.create(["fixer", ".rb"]) do |file|
         file.write("Post.all")
         file.flush
+        file.close
         digest = Digest::SHA256.digest("Post.all")
         errors = Queue.new
         writers = ["Post.includes(:comments).all", "Post.includes(:author).all"].map do |source|

@@ -294,6 +294,7 @@ module Bullematic
             tempfile.flush
             tempfile.fsync
             File.chmod(mode, tempfile.path)
+            tempfile.close
             File.rename(tempfile.path, filepath)
           end
           begin
