@@ -9,5 +9,6 @@ gem "rake", "~> 13.0"
 gem "rspec", "~> 3.0"
 gem "rails", "~> 7.1.0"
 gem "sqlite3", "~> 1.7"
+gem "tzinfo-data", platforms: %i[windows jruby]
 gem "rbs-inline", require: false
 gem "steep", require: false

@@ -86,7 +86,7 @@ jobs:
         run: gem build bullematic.gemspec --output /tmp/bullematic.gem
 
       - name: Install packaged gem
-        run: gem install --local /tmp/bullematic.gem --ignore-dependencies
+        run: gem install /tmp/bullematic.gem
 
       - name: Smoke test packaged executable
         run: bullematic doctor
