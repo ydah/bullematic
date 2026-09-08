@@ -177,6 +177,24 @@ bin/setup
 bundle exec rake spec
 ```
 
+### Landing page
+
+The English landing page lives in `site/` and uses static HTML and Tailwind CSS, with no client-side JavaScript.
+
+```bash
+cd site
+npm ci
+npm run build
+python3 -m http.server 8000 --directory dist
+```
+
+Open http://localhost:8000 to preview. Rebuild after editing `site/index.html` or `site/styles.css`.
+
+For the first deployment, select **GitHub Actions** under **Settings → Pages → Build and deployment → Source**.
+See [GitHub's custom workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages) for details.
+After the changes are merged into `main`, the `Deploy landing page` workflow publishes to https://ydah.github.io/bullematic/.
+Pull requests build the site without deploying. You can also run the workflow manually from `main`.
+
 ## Contributing
 
 Bug reports and pull requests are welcome at https://github.com/ydah/bullematic.

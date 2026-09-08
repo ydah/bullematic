@@ -1,0 +1,10 @@
+@import "tailwindcss" source(none);
+@source "./index.html";
+
+@layer base {
+  h1, h2, h3 { @apply text-balance; }
+  p { @apply text-pretty; }
+  a, pre { @apply focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-700; }
+  section[id] { @apply scroll-mt-8; }
+  pre { @apply overflow-x-auto; }
+}

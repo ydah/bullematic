@@ -22,3 +22,5 @@
 /.vscode/
 /Gemfile.lock
 *.gem
+/site/node_modules/
+/site/dist/
