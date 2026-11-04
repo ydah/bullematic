@@ -109,7 +109,7 @@ jobs:
         run: bundle exec rake
 
   prism-minimum:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     env:
       BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/prism_0.24.gemfile
